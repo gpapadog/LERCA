@@ -93,7 +93,7 @@ LERCAfullcond <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
 
       # ---- Update alphas.
       current_cutoffs <- cutoffs[cc, ii, ]
-      current_alphaY <- alphas[1, cc, ii - 1, , ]
+      current_alphaY <- alphas[2, cc, ii - 1, , ]
       current_coefs <- coefs[, cc, ii, , ]
       current_vars <- variances[, cc, ii, ]
       
