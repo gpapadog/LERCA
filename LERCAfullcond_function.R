@@ -5,7 +5,7 @@ LERCAfullcond <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                           alpha_priorY = 0.001, beta_priorY = 0.001,
                           starting_cutoffs = NULL,
                           prop_distribution = c('Normal', 'Uniform'),
-                          normal_percent = 1, print_every = 1000) {
+                          normal_percent = 1, plot_every = 1000) {
   
   prop_distribution <- match.arg(prop_distribution)
   
@@ -108,8 +108,8 @@ LERCAfullcond <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                  mu_priorY = mu_priorY, omega = omega)
       alphas[, cc, ii, , ] <- alphas_upd
       
-      if (print_every > 0) {
-        if (ii %% print_every == 0) {
+      if (plot_every > 0) {
+        if (ii %% plot_every == 0) {
           par(mfrow = c(2, ceiling(K / 2)), mar = rep(2, 4))
           
           for (kk in 1 : K) {

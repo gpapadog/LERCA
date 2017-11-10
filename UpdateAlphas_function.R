@@ -1,8 +1,3 @@
-# current_cutoffs <- cutoffs[cc, ii, ]
-# current_alphaY <- alphas[1, cc, ii - 1, , ]
-# current_coefs <- coefs[, cc, ii, , ]
-# current_vars <- variances[, cc, ii, ]
-
 UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
                          current_coefs, current_vars, Sigma_priorX, mu_priorX,
                          Sigma_priorY, mu_priorY,
@@ -28,7 +23,7 @@ UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
       alpha0 <- ifelse(corresp_alphaY == 0, omega / (omega + 1), 1 / 2)
       
       curr_cov <- D[, cov_cols[jj]]
-      other_cov <- cbind(1, as.matrix(D[, cov_cols[- jj]]))
+      other_cov <- cbind(Int = 1, as.matrix(D[, cov_cols[- jj]]))
       resid <- D$X - other_cov %*% current_coefs[1, ee, - c(2, jj + 2)]
       
       prior_var <- Sigma_priorX[jj + 1, jj + 1]
@@ -58,7 +53,7 @@ UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
       alpha0 <- ifelse(corresp_alphaX == 0, 1 / 2, 1 / (omega + 1))
       
       curr_cov <- D[, cov_cols[jj]]
-      other_cov <- cbind(1, D$X, as.matrix(D[, cov_cols[- jj]]))
+      other_cov <- cbind(Int = 1, X = D$X, as.matrix(D[, cov_cols[- jj]]))
       resid <- D$Y - other_cov %*% current_coefs[2, ee, - (jj + 2)]
       
       prior_var <- Sigma_priorY[jj + 2, jj + 2]
@@ -67,7 +62,7 @@ UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
       post_var <- 1 / (post_var + 1 / prior_var)
       
       post_mean <- sum(curr_cov * resid) / current_vars[2, ee]
-      post_mean <- post_mean + mu_priorY[jj + 1] / prior_var
+      post_mean <- post_mean + mu_priorY[jj + 2] / prior_var
       post_mean <- post_var * post_mean
       
       alpha1 <- corresp_alphaX * log(omega / (omega + 1)) +
