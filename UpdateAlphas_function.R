@@ -6,13 +6,13 @@ UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
   minX <- min(dta$X) - 0.00001
   maxX <- max(dta$X) + 0.00001
   num_conf <- length(cov_cols)
+  cuts <- c(minX, current_cutoffs, maxX)
   
   r <- array(NA, dim = c(2, dim(current_alphaY)))
   
   # ---- Update alphas.
   for (ee in 1 : (K + 1)) {
     
-    cuts <- c(minX, current_cutoffs, maxX)
     D <- subset(dta, X > cuts[ee] & X <= cuts[ee + 1])
 
     for (jj in 1 : num_conf) {

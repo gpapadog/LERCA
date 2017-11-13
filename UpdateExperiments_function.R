@@ -34,8 +34,11 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   
   D <- subset(dta, X >= sj1 & X <= sj1star | X >= sj1star & X <= sj1)
   
-  # If no observations changed experiment, do not accept.
-  if (nrow(D) == 0) {
+  # If no observations changed experiment, or new cutoff without data in
+  # between, do not accept.
+  if (nrow(D) == 0 |
+      sum(dta$X >= sj1star & dta$X <= sj2) == 0 |
+      sum(dta$X >= sj & dta$X <= sj1star) == 0) {
     return(list(cutoffs = current_cutoffs, acc = FALSE))
     cutoffs[cc, ii, ] <- current_cutoffs
   }

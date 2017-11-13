@@ -26,10 +26,13 @@ attach(data_specs)
 
 # --------
 
-N <- 600 * num_exper
+N <- 300 * num_exper
 prop_distribution <- 'Uniform'
-normal_percent <- 0.5
+normal_percent <- 0.1
 omega <- 5000
+comb_probs <- c(0.01, 0.5, 0.99)
+split_probs <- c(0.2, 0.95)
+s_upd_probs <- c(99 / 100, 1 / 100)
 
 predict_at <- MakePredictAt(Xrange, exper_change, predict_further_than = 0)
 
@@ -46,9 +49,9 @@ dta <- as.data.frame(sim$data)
 cov_cols <- which(names(dta) %in% paste0('C', 1 : num_conf))
 
 
-chains <- 1
-Nsims <- 50000
-plot_every <- 1000
+chains <- 2
+Nsims <- 10000
+plot_every <- 5000
 
 # ------- STEP 1. Priors -------- #
 
@@ -65,8 +68,8 @@ beta_priorX <- 0.001
 beta_priorY <- 0.001
 
 K <- 3
-# starting_cutoffs <- rbind(c(1, 5, 8), c(1, 1.8, 3), c(2, 4, 7))
-starting_cutoffs <- rbind(c(1, 1.5, 7), c(1, 5, 8), c(2, 4, 7))
+starting_cutoffs <- rbind(c(1, 1.2, 1.8), c(1, 1.8, 3), c(2, 4, 7))
+# starting_cutoffs <- rbind(c(1, 1.3, 9), c(0.5, 1, 1.5))
 
 
 # ------ LERCA code ------ #
@@ -86,7 +89,10 @@ cutoffs <- arrays$cutoffs
 coefs <- arrays$coefs
 variances <- arrays$variances
 
-acc <- rep(0, chains)
+acc <- array(0, dim = c(2, 2, chains))
+dimnames(acc) <- list(kind = c('separate', 'jumpOver'),
+                      num = c('attempt', 'success'),
+                      chain = 1 : chains)
 
 
 # -------- STEP 3. MCMC. ---------- #
@@ -102,20 +108,57 @@ for (cc in 1 : chains) {
     current_cutoffs <- cutoffs[cc, ii - 1, ]
     current_coefs <- coefs[, cc, ii - 1, , ]
     current_vars <- variances[, cc, ii - 1, ]
-    
-    exp_upd <- UpdateExperiments(dta = dta, cov_cols = cov_cols,
+    current_alphas <- alphas[, cc, ii - 1, , ]
+
+    wh_s_upd <- sample(c(1, 2), 1, prob = s_upd_probs)
+    if (wh_s_upd == 1) {
+
+      acc[1, 1, cc] <- acc[1, 1, cc] + 1
+      
+      exp_upd <- UpdateExperiments(dta = dta, cov_cols = cov_cols,
+                                   current_cutoffs = current_cutoffs,
+                                   current_coefs = current_coefs,
+                                   current_vars = current_vars,
+                                   prop_distribution = prop_distribution,
+                                   normal_percent = normal_percent)
+      cutoffs[cc, ii, ] <- exp_upd$cutoffs
+      acc[1, 2, cc] <- acc[1, 2, cc] + exp_upd$acc
+      
+      # ---- Update alphas.
+      current_cutoffs <- cutoffs[cc, ii, ]
+      current_alphaY <- alphas[2, cc, ii - 1, , ]
+      current_coefs <- coefs[, cc, ii - 1, , ]
+      current_vars <- variances[, cc, ii - 1, ]
+      
+      alphas_upd <- UpdateAlphas(dta = dta, cov_cols = cov_cols,
                                  current_cutoffs = current_cutoffs,
+                                 current_alphaY = current_alphaY,
                                  current_coefs = current_coefs,
                                  current_vars = current_vars,
-                                 prop_distribution = prop_distribution,
-                                 normal_percent = normal_percent)
-    cutoffs[cc, ii, ] <- exp_upd$cutoffs
-    acc[cc] <- acc[cc] + exp_upd$acc
+                                 Sigma_priorX = Sigma_priorX,
+                                 mu_priorX = mu_priorX,
+                                 Sigma_priorY = Sigma_priorY,
+                                 mu_priorY = mu_priorY, omega = omega)
+      alphas[, cc, ii, , ] <- alphas_upd      
+
+    } else if (wh_s_upd == 2) {
+      
+      acc[2, 1, cc] <- acc[2, 1, cc] + 1
+      
+      jump_upd <- JumpOver(dta = dta, current_cutoffs = current_cutoffs,
+                           current_alphas, approximate = TRUE,
+                           cov_cols = cov_cols, omega = omega,
+                           comb_probs = comb_probs, split_probs = split_probs)
+      
+      acc[2, 2, cc] <- acc[2, 2, cc] + jump_upd$acc
+      cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
+      alphas[, cc, ii, , ] <- jump_upd$new_alphas
+    }
     
     
     # ----- Updating the coefficients.
     current_cutoffs <- cutoffs[cc, ii, ]
-    current_alphas <- alphas[, cc, ii - 1, , ]
+    current_alphas <- alphas[, cc, ii, , ]
     current_vars <- variances[, cc, ii - 1, ]
     
     coef_upd <- UpdateCoefficients(dta = dta, cov_cols = cov_cols,
@@ -139,22 +182,6 @@ for (cc in 1 : chains) {
                                beta_priorY = beta_priorY)
     variances[, cc, ii, ] <- var_upd
     
-    # ---- Update alphas.
-    current_cutoffs <- cutoffs[cc, ii, ]
-    current_alphaY <- alphas[2, cc, ii - 1, , ]
-    current_coefs <- coefs[, cc, ii, , ]
-    current_vars <- variances[, cc, ii, ]
-    
-    alphas_upd <- UpdateAlphas(dta = dta, cov_cols = cov_cols,
-                               current_cutoffs = current_cutoffs,
-                               current_alphaY = current_alphaY,
-                               current_coefs = current_coefs,
-                               current_vars = current_vars,
-                               Sigma_priorX = Sigma_priorX,
-                               mu_priorX = mu_priorX,
-                               Sigma_priorY = Sigma_priorY,
-                               mu_priorY = mu_priorY, omega = omega)
-    alphas[, cc, ii, , ] <- alphas_upd
     
     if (plot_every > 0) {
       if (ii %% plot_every == 0) {
@@ -176,8 +203,8 @@ lerca <- list(cutoffs = cutoffs[, 1 : ii, , drop = FALSE],
               coefs = coefs[, , 1 : ii, , , drop = FALSE],
               variances = variances[, , 1 : ii, , drop = FALSE])
 
-burn <- 20000
-thin <- 3
+burn <- 10000
+thin <- 10
 lerca_short <- BurnThin(lerca, burn = burn, thin = thin)
 
 cutoffs_keep <- lerca_short$cutoffs
@@ -202,8 +229,8 @@ for (kk in 1 : K) {
 
 # Diagnostics for alpha.
 model <- 1
-chain <- 1
-round(apply(alphas_keep[model, chain, , , ], c(2, 3), mean), 4)
+chain <- 2
+round(apply(alphas_keep[model, chain, , , ], c(2, 3), mean), 3)
 round(t(out_coef), 4)
 round(t(XCcorr), 4)
 
@@ -233,8 +260,8 @@ for (ee in 1 : num_exper) {
 
 
 # Diagnostics for the coefficients.
-wh_coef <- 3
-wh_model <- 1
+wh_coef <- 2
+wh_model <- 2
 for (ee in 1 : num_exper) {
   plot(1, xlim = c(0, dim(cutoffs_keep)[2]), type = 'n',
        ylim = range(coefs_keep[wh_model, , , ee, wh_coef], na.rm = TRUE))
@@ -259,9 +286,9 @@ for (cc in 1 : chains) {
 
 point_x <- c(10, 30, 50)
 for (pp in 1 : length(point_x)) {
-  plot(1, type = 'n', ylim = range(ER$y[point_x[pp], , ]), xlim = range(keep))
+  plot(1, type = 'n', ylim = range(ER$y[point_x[pp], , ]), xlim = c(1, dim(ER$y)[3]))
   for (cc in 1 : chains) {
-    lines(keep, ER$y[point_x[pp], cc, ], col = cc)
+    lines(ER$y[point_x[pp], cc, ], col = cc)
   }
 }
 
