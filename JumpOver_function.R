@@ -7,9 +7,11 @@
 #' @param split_probs When one experiment is split, split_probs describes the
 #' probability that the alpha of a new experiment is equal to 1, when the alpha
 #' of the current experiment is 0, and when it is 1. Vector of length 2.
+#' @param min_exper_sample The minimum number of observations within an
+#' experiment.
 JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
                      cov_cols, omega = 5000, comb_probs = c(0.01, 0.5, 0.99),
-                     split_probs = c(0.2, 0.95)) {
+                     split_probs = c(0.2, 0.95), min_exper_sample = 20) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
             acc = FALSE)
@@ -88,7 +90,8 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
   dta$prev_exper[dta$prev_exper == 0] <- 1
 
   # If the proposed value creates experiment with no data, do not accept.
-  if (length(unique(dta$new_exper)) < K + 1) {
+  if (length(unique(dta$new_exper)) < K + 1 |
+      any(table(dta$new_exper) < min_exper_sample)) {
     return(r)
   }
   
