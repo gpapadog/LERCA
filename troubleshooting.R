@@ -1,4 +1,4 @@
-rm(list = ls())
+# Simulation of fixed number of points in the experiment configuration.
 
 library(data.table)
 library(invgamma)
@@ -8,53 +8,60 @@ library(mvnfast)
 setwd('~/Documents/Causal_ER_curve/LERCA/')
 load_path <- 'Data_specs/data_specs4.Rdata'
 
-# Functions from the package:
 source_path <- '~/Github/LERCA/R/'
-file_source <- c('MakePredictAt', 'SimDifferentialConfounding',
+file_source <- c('SimDifferentialConfounding',
                  'XCcontinuous', 'GetbYvalues', 'GenYgivenXC',
                  'WAIC', 'GetER', 'GetER_1chain')
 sapply(paste0(source_path, file_source, '_function.R'), source, .GlobalEnv)
 
-# Functions from full conditional sampling:
 source_path <- '~/Github/LERCA_FullCond/'
 file_source <- list.files(source_path, pattern = '*_function.R$')
 sapply(paste0(source_path, file_source), source, .GlobalEnv)
 
+
+
+index <- 3
 
 load(load_path)
 attach(data_specs)
 
 # --------
 
-N <- 100 * num_exper
+N <- 200 * num_exper
+overall_meanC <- 'observed'
+
+chains <- 3
+Nsims <- 1000
+burn <- 30000
+thin <- 70
+coverged_psr_diff <- 0.05
+plot_every <- 500
+
 prop_distribution <- 'Uniform'
-normal_percent <- 0.1
+# normal_percent <- 1 / 2
+BIC_approximation <- TRUE
 omega <- 5000
 comb_probs <- c(0.01, 0.5, 0.99)
 split_probs <- c(0.2, 0.95)
 s_upd_probs <- c(99 / 100, 1 / 100)
-K <- 3
+K <- num_exper - 1
 
 
-predict_at <- MakePredictAt(Xrange, exper_change, predict_further_than = 0)
+print(index)
+set.seed(index * 2)
 
-set.seed(1234)
 sim <- SimDifferentialConfounding(N = N, num_exper = num_exper,
                                   XCcorr = XCcorr, varC = varC,
                                   Xrange = Xrange, bYX = bYX,
                                   exper_change = exper_change,
                                   meanCexp1 = meanCexp1, out_coef = out_coef,
                                   interYexp1 = interYexp1, Ysd = Ysd,
-                                  XY_function = XY_function, XY_spec = XY_spec,
-                                  overall_meanC = 'observed')
+                                  overall_meanC = overall_meanC,
+                                  XY_function = XY_function,
+                                  XY_spec = XY_spec)
 dta <- as.data.frame(sim$data)
 cov_cols <- which(names(dta) %in% paste0('C', 1 : num_conf))
 
-
-chains <- 3
-Nsims <- 5000
-starting_cutoffs <- rbind(c(1, 1.2, 1.8), c(1, 1.8, 3), c(0.5, 0.7, 1))
-plot_every <- 1000
 
 # ------- STEP 1. Priors -------- #
 
@@ -70,8 +77,6 @@ alpha_priorY <- 0.001
 beta_priorX <- 0.001
 beta_priorY <- 0.001
 
-
-
 # ------ LERCA code ------ #
 
 num_exper <- K + 1
@@ -83,7 +88,7 @@ maxX <- max(dta$X)
 # -------- Where to save --------- #
 arrays <- MakeArrays(chains = chains, Nsims = Nsims, num_exper = num_exper,
                      num_conf = num_conf, omega = omega, minX = minX,
-                     maxX = maxX, starting_cutoffs = starting_cutoffs)
+                     maxX = maxX, starting_cutoffs = NULL)
 alphas <- arrays$alphas
 cutoffs <- arrays$cutoffs
 coefs <- arrays$coefs
