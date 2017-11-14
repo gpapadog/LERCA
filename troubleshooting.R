@@ -26,13 +26,15 @@ attach(data_specs)
 
 # --------
 
-N <- 300 * num_exper
+N <- 100 * num_exper
 prop_distribution <- 'Uniform'
 normal_percent <- 0.1
 omega <- 5000
 comb_probs <- c(0.01, 0.5, 0.99)
 split_probs <- c(0.2, 0.95)
 s_upd_probs <- c(99 / 100, 1 / 100)
+K <- 3
+
 
 predict_at <- MakePredictAt(Xrange, exper_change, predict_further_than = 0)
 
@@ -49,9 +51,10 @@ dta <- as.data.frame(sim$data)
 cov_cols <- which(names(dta) %in% paste0('C', 1 : num_conf))
 
 
-chains <- 2
-Nsims <- 10000
-plot_every <- 5000
+chains <- 3
+Nsims <- 5000
+starting_cutoffs <- rbind(c(1, 1.2, 1.8), c(1, 1.8, 3), c(0.5, 0.7, 1))
+plot_every <- 1000
 
 # ------- STEP 1. Priors -------- #
 
@@ -67,9 +70,6 @@ alpha_priorY <- 0.001
 beta_priorX <- 0.001
 beta_priorY <- 0.001
 
-K <- 3
-starting_cutoffs <- rbind(c(1, 1.2, 1.8), c(1, 1.8, 3), c(2, 4, 7))
-# starting_cutoffs <- rbind(c(1, 1.3, 9), c(0.5, 1, 1.5))
 
 
 # ------ LERCA code ------ #
