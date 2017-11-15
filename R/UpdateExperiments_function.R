@@ -1,6 +1,6 @@
 UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
-                              current_vars,
-                              prop_distribution = c('Normal', 'Uniform'),
+                              current_vars, min_exper_sample = 20,
+                              prop_distribution = c('Uniform', 'Normal'),
                               normal_percent = 1) {
   
   minX <- min(dta$X)
@@ -22,6 +22,14 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
                                  mean = proposed_cutoffs[wh_cut],
                                  sd = prop_sd)
     proposed_cutoffs[wh_cut] <- val
+  }
+  
+  # If we have less than min_exper_sample data, we reject.
+  prop_cuts <- c(minX - 0.001, proposed_cutoffs, maxX + 0.001)
+  new_exper <- sapply(dta$X, function(x) sum(x < prop_cuts))
+  if (length(table(new_exper)) < K + 1 |
+      any(table(new_exper) < min_exper_sample)) {
+    return(list(cutoffs = current_cutoffs, acc = FALSE))
   }
   
   # Calculating the AR.

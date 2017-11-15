@@ -10,7 +10,8 @@ LERCA(dta, chains, Nsims, K, cov_cols, omega = 5000, mu_priorX = NULL,
   beta_priorY = 0.001, starting_cutoffs = NULL,
   prop_distribution = c("Uniform", "Normal"), normal_percent = 1,
   plot_every = 0, comb_probs = c(0.01, 0.5, 0.99), split_probs = c(0.2,
-  0.95), s_upd_probs = c(99/100, 1/100))
+  0.95), s_upd_probs = c(94/100, 1/100, 5/100), alpha_probs = c(0.01, 0.5,
+  0.99), min_exper_sample = 20)
 }
 \description{
 Function that calculates the mean exposure response curve allowing for

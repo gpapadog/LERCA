@@ -14,7 +14,9 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   normal_percent = 1, plot_every = 0,
                   comb_probs = c(0.01, 0.5, 0.99),
                   split_probs = c(0.2, 0.95),
-                  s_upd_probs = c(99 / 100, 1 / 100)) {
+                  s_upd_probs = c(94 / 100, 1 / 100, 5 / 100),
+                  alpha_probs = c(0.01, 0.5, 0.99),
+                  min_exper_sample = 20) {
   
   prop_distribution <- match.arg(prop_distribution)
   
@@ -75,6 +77,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                      current_cutoffs = current_cutoffs,
                                      current_coefs = current_coefs,
                                      current_vars = current_vars,
+                                     min_exper_sample = min_exper_sample,
                                      prop_distribution = prop_distribution,
                                      normal_percent = normal_percent)
         cutoffs[cc, ii, ] <- exp_upd$cutoffs
