@@ -18,6 +18,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   alpha_probs = c(0.01, 0.5, 0.99),
                   min_exper_sample = 20) {
   
+  progress <- floor(seq(2, Nsims, length.out = 11))[- 1]
+  
   prop_distribution <- match.arg(prop_distribution)
   
   num_exper <- K + 1
@@ -58,8 +60,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
   for (cc in 1 : chains) {
     for (ii in 2 : Nsims) {
       
-      if (ii %% 100 == 0) {
-        print(paste('Iteration', ii))
+      if (ii %in% progress) {
+        print(paste0(10 * which(progress == ii), '% done.'))
       }
       
       # ----- Update experiment configuration and alphas.
