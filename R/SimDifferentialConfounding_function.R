@@ -128,7 +128,7 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   }
   
   dta <- cbind(dta, Cfull)
-  setnames(dta, names(dta)[- c(1, 2)], paste0('C', 1:num_conf))
+  data.table::setnames(dta, names(dta)[- c(1, 2)], paste0('C', 1:num_conf))
   
   # Whether we want to use the true overall mean or the observed.
   over_meanC <- meanC

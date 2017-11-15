@@ -22,7 +22,7 @@
 GenYgivenXC <- function(dataset, out_coef, bY, bYX, Ysd, XY_function,
                         XY_spec = NULL) {
   
-  dta <- copy(dataset)
+  dta <- data.table::copy(dataset)
   
   N <- nrow(dta)
   num_conf <- dim(out_coef)[1]
