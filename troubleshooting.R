@@ -1,3 +1,6 @@
+# Simulation of fixed number of points in the experiment configuration.
+
+dev.off()
 rm(list = ls())
 
 library(data.table)
@@ -8,53 +11,62 @@ library(mvnfast)
 setwd('~/Documents/Causal_ER_curve/LERCA/')
 load_path <- 'Data_specs/data_specs4.Rdata'
 
-# Functions from the package:
 source_path <- '~/Github/LERCA/R/'
-file_source <- c('MakePredictAt', 'SimDifferentialConfounding',
+file_source <- c('SimDifferentialConfounding',
                  'XCcontinuous', 'GetbYvalues', 'GenYgivenXC',
                  'WAIC', 'GetER', 'GetER_1chain')
 sapply(paste0(source_path, file_source, '_function.R'), source, .GlobalEnv)
 
-# Functions from full conditional sampling:
 source_path <- '~/Github/LERCA_FullCond/'
 file_source <- list.files(source_path, pattern = '*_function.R$')
 sapply(paste0(source_path, file_source), source, .GlobalEnv)
 
+
+
+index <- 1
 
 load(load_path)
 attach(data_specs)
 
 # --------
 
-N <- 100 * num_exper
+N <- 200 * num_exper
+overall_meanC <- 'observed'
+
+chains <- 2
+Nsims <- 300
+burn <- 30000
+thin <- 70
+coverged_psr_diff <- 0.05
+plot_every <- 300
+
 prop_distribution <- 'Uniform'
-normal_percent <- 0.1
+# normal_percent <- 1 / 2
+BIC_approximation <- TRUE
 omega <- 5000
 comb_probs <- c(0.01, 0.5, 0.99)
 split_probs <- c(0.2, 0.95)
-s_upd_probs <- c(99 / 100, 1 / 100)
-K <- 3
+s_upd_probs <- c(94 / 100, 1 / 100, 5 / 100)
+alpha_probs <- c(0.01, 0.5, 0.99)
+min_exper_sample <- 20
+K <- num_exper - 1
 
 
-predict_at <- MakePredictAt(Xrange, exper_change, predict_further_than = 0)
+print(index)
+set.seed(index * 2)
 
-set.seed(1234)
 sim <- SimDifferentialConfounding(N = N, num_exper = num_exper,
                                   XCcorr = XCcorr, varC = varC,
                                   Xrange = Xrange, bYX = bYX,
                                   exper_change = exper_change,
                                   meanCexp1 = meanCexp1, out_coef = out_coef,
                                   interYexp1 = interYexp1, Ysd = Ysd,
-                                  XY_function = XY_function, XY_spec = XY_spec,
-                                  overall_meanC = 'observed')
+                                  overall_meanC = overall_meanC,
+                                  XY_function = XY_function,
+                                  XY_spec = XY_spec)
 dta <- as.data.frame(sim$data)
 cov_cols <- which(names(dta) %in% paste0('C', 1 : num_conf))
 
-
-chains <- 3
-Nsims <- 5000
-starting_cutoffs <- rbind(c(1, 1.2, 1.8), c(1, 1.8, 3), c(0.5, 0.7, 1))
-plot_every <- 1000
 
 # ------- STEP 1. Priors -------- #
 
@@ -70,8 +82,6 @@ alpha_priorY <- 0.001
 beta_priorX <- 0.001
 beta_priorY <- 0.001
 
-
-
 # ------ LERCA code ------ #
 
 num_exper <- K + 1
@@ -83,16 +93,15 @@ maxX <- max(dta$X)
 # -------- Where to save --------- #
 arrays <- MakeArrays(chains = chains, Nsims = Nsims, num_exper = num_exper,
                      num_conf = num_conf, omega = omega, minX = minX,
-                     maxX = maxX, starting_cutoffs = starting_cutoffs)
+                     maxX = maxX, starting_cutoffs = NULL)
 alphas <- arrays$alphas
 cutoffs <- arrays$cutoffs
 coefs <- arrays$coefs
 variances <- arrays$variances
 
-acc <- array(0, dim = c(2, 2, chains))
-dimnames(acc) <- list(kind = c('separate', 'jumpOver'),
-                      num = c('attempt', 'success'),
-                      chain = 1 : chains)
+acc <- array(0, dim = c(3, 2, chains))
+dimnames(acc) <- list(kind = c('separate', 'jumpOver', 'jumpWithin'),
+                      num = c('attempt', 'success'), chain = 1 : chains)
 
 
 # -------- STEP 3. MCMC. ---------- #
@@ -110,7 +119,8 @@ for (cc in 1 : chains) {
     current_vars <- variances[, cc, ii - 1, ]
     current_alphas <- alphas[, cc, ii - 1, , ]
 
-    wh_s_upd <- sample(c(1, 2), 1, prob = s_upd_probs)
+    wh_s_upd <- sample(c(1, 2, 3), 1, prob = s_upd_probs)
+    
     if (wh_s_upd == 1) {
 
       acc[1, 1, cc] <- acc[1, 1, cc] + 1
@@ -127,9 +137,7 @@ for (cc in 1 : chains) {
       # ---- Update alphas.
       current_cutoffs <- cutoffs[cc, ii, ]
       current_alphaY <- alphas[2, cc, ii - 1, , ]
-      current_coefs <- coefs[, cc, ii - 1, , ]
-      current_vars <- variances[, cc, ii - 1, ]
-      
+
       alphas_upd <- UpdateAlphas(dta = dta, cov_cols = cov_cols,
                                  current_cutoffs = current_cutoffs,
                                  current_alphaY = current_alphaY,
@@ -148,11 +156,27 @@ for (cc in 1 : chains) {
       jump_upd <- JumpOver(dta = dta, current_cutoffs = current_cutoffs,
                            current_alphas, approximate = TRUE,
                            cov_cols = cov_cols, omega = omega,
-                           comb_probs = comb_probs, split_probs = split_probs)
+                           comb_probs = comb_probs, split_probs = split_probs,
+                           min_exper_sample = min_exper_sample)
       
       acc[2, 2, cc] <- acc[2, 2, cc] + jump_upd$acc
       cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
       alphas[, cc, ii, , ] <- jump_upd$new_alphas
+      
+    } else if (wh_s_upd == 3) {  # Within experiment simultaneous update.
+      
+      acc[3, 1, cc] <- acc[3, 1, cc] + 1
+      
+      jump_upd <- JumpWithin(dta = dta, current_cutoffs = current_cutoffs,
+                             current_alphas = current_alphas,
+                             cov_cols = cov_cols, approximate = TRUE,
+                             omega = omega, alpha_probs = alpha_probs,
+                             min_exper_sample = min_exper_sample)
+      
+      acc[3, 1, cc] <- acc[3, 1, cc] + jump_upd$acc
+      cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
+      alphas[, cc, ii, , ] <- jump_upd$new_alphas
+      
     }
     
     
@@ -228,11 +252,11 @@ for (kk in 1 : K) {
 
 
 # Diagnostics for alpha.
-model <- 1
-chain <- 2
-round(apply(alphas_keep[model, chain, , , ], c(2, 3), mean), 3)
+model <- 2
+chain <- 1
+round(apply(alphas_keep[model, chain, , , ], c(2, 3), mean), 2)
 round(t(out_coef), 4)
-round(t(XCcorr), 4)
+round(t(XCcorr), 2)
 
 par(mfrow = c(2, 2), mar = rep(2, 4))
 
