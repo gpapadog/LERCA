@@ -1,5 +1,8 @@
 # Simulation of fixed number of points in the experiment configuration.
 
+dev.off()
+rm(list = ls())
+
 library(data.table)
 library(invgamma)
 library(truncnorm)
@@ -20,7 +23,7 @@ sapply(paste0(source_path, file_source), source, .GlobalEnv)
 
 
 
-index <- 3
+index <- 1
 
 load(load_path)
 attach(data_specs)
@@ -30,12 +33,12 @@ attach(data_specs)
 N <- 200 * num_exper
 overall_meanC <- 'observed'
 
-chains <- 3
-Nsims <- 1000
+chains <- 2
+Nsims <- 300
 burn <- 30000
 thin <- 70
 coverged_psr_diff <- 0.05
-plot_every <- 500
+plot_every <- 300
 
 prop_distribution <- 'Uniform'
 # normal_percent <- 1 / 2
@@ -43,7 +46,9 @@ BIC_approximation <- TRUE
 omega <- 5000
 comb_probs <- c(0.01, 0.5, 0.99)
 split_probs <- c(0.2, 0.95)
-s_upd_probs <- c(99 / 100, 1 / 100)
+s_upd_probs <- c(94 / 100, 1 / 100, 5 / 100)
+alpha_probs <- c(0.01, 0.5, 0.99)
+min_exper_sample <- 20
 K <- num_exper - 1
 
 
@@ -94,10 +99,9 @@ cutoffs <- arrays$cutoffs
 coefs <- arrays$coefs
 variances <- arrays$variances
 
-acc <- array(0, dim = c(2, 2, chains))
-dimnames(acc) <- list(kind = c('separate', 'jumpOver'),
-                      num = c('attempt', 'success'),
-                      chain = 1 : chains)
+acc <- array(0, dim = c(3, 2, chains))
+dimnames(acc) <- list(kind = c('separate', 'jumpOver', 'jumpWithin'),
+                      num = c('attempt', 'success'), chain = 1 : chains)
 
 
 # -------- STEP 3. MCMC. ---------- #
@@ -115,7 +119,8 @@ for (cc in 1 : chains) {
     current_vars <- variances[, cc, ii - 1, ]
     current_alphas <- alphas[, cc, ii - 1, , ]
 
-    wh_s_upd <- sample(c(1, 2), 1, prob = s_upd_probs)
+    wh_s_upd <- sample(c(1, 2, 3), 1, prob = s_upd_probs)
+    
     if (wh_s_upd == 1) {
 
       acc[1, 1, cc] <- acc[1, 1, cc] + 1
@@ -132,9 +137,7 @@ for (cc in 1 : chains) {
       # ---- Update alphas.
       current_cutoffs <- cutoffs[cc, ii, ]
       current_alphaY <- alphas[2, cc, ii - 1, , ]
-      current_coefs <- coefs[, cc, ii - 1, , ]
-      current_vars <- variances[, cc, ii - 1, ]
-      
+
       alphas_upd <- UpdateAlphas(dta = dta, cov_cols = cov_cols,
                                  current_cutoffs = current_cutoffs,
                                  current_alphaY = current_alphaY,
@@ -153,11 +156,27 @@ for (cc in 1 : chains) {
       jump_upd <- JumpOver(dta = dta, current_cutoffs = current_cutoffs,
                            current_alphas, approximate = TRUE,
                            cov_cols = cov_cols, omega = omega,
-                           comb_probs = comb_probs, split_probs = split_probs)
+                           comb_probs = comb_probs, split_probs = split_probs,
+                           min_exper_sample = min_exper_sample)
       
       acc[2, 2, cc] <- acc[2, 2, cc] + jump_upd$acc
       cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
       alphas[, cc, ii, , ] <- jump_upd$new_alphas
+      
+    } else if (wh_s_upd == 3) {  # Within experiment simultaneous update.
+      
+      acc[3, 1, cc] <- acc[3, 1, cc] + 1
+      
+      jump_upd <- JumpWithin(dta = dta, current_cutoffs = current_cutoffs,
+                             current_alphas = current_alphas,
+                             cov_cols = cov_cols, approximate = TRUE,
+                             omega = omega, alpha_probs = alpha_probs,
+                             min_exper_sample = min_exper_sample)
+      
+      acc[3, 1, cc] <- acc[3, 1, cc] + jump_upd$acc
+      cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
+      alphas[, cc, ii, , ] <- jump_upd$new_alphas
+      
     }
     
     
@@ -233,11 +252,11 @@ for (kk in 1 : K) {
 
 
 # Diagnostics for alpha.
-model <- 1
-chain <- 2
-round(apply(alphas_keep[model, chain, , , ], c(2, 3), mean), 3)
+model <- 2
+chain <- 1
+round(apply(alphas_keep[model, chain, , , ], c(2, 3), mean), 2)
 round(t(out_coef), 4)
-round(t(XCcorr), 4)
+round(t(XCcorr), 2)
 
 par(mfrow = c(2, 2), mar = rep(2, 4))
 
