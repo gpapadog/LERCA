@@ -1,3 +1,10 @@
+#' Burn in and thinning of the LERCA fit.
+#' 
+#' @param lerca The LERCA fit.
+#' @param burn The number of initial iterations to discard.
+#' @param thin The distance of iterations we want to keep.
+#' 
+#' @export
 BurnThin <- function(lerca, burn, thin) {
   
   if (burn == 0 & thin == 1) {
