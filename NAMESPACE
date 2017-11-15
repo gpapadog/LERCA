@@ -2,5 +2,6 @@
 
 export(GetER)
 export(GetbYvalues)
+export(LERCA)
 export(SimDifferentialConfounding)
 export(WAIC)
