@@ -61,7 +61,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
     for (ii in 2 : Nsims) {
       
       if (ii %in% progress) {
-        print(paste0(10 * which(progress == ii), '% done.'))
+        print(paste0('Chain ', cc, ' - ', 10 * which(progress == ii), '% done.'))
       }
       
       # ----- Update experiment configuration and alphas.
