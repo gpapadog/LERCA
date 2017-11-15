@@ -1,6 +1,5 @@
 # Simulation of fixed number of points in the experiment configuration.
 
-dev.off()
 rm(list = ls())
 
 library(data.table)
