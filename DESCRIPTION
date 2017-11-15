@@ -1,0 +1,21 @@
+Package: LERCA
+Type: Package
+Title: Local Exposure-Response Confounding Adjustment
+Version: 0.0.0.9000
+Date: 2017-11-15
+Author: Georgia Papadogeorgou
+Maintainer: Georgia Papadogeorgou <gpapadogeorgou@gmail.com>
+Description: FILL
+License: GPL (>= 2)
+LazyData: TRUE
+URL: https://github.com/gpapadog/LERCA
+BugReports: https://github.com/gpapadog/LERCA/issues
+RoxygenNote: 6.0.1
+Suggests: 
+    knitr
+VignetteBuilder: knitr
+Imports: 
+    data.table,
+    invgamma,
+    mvnfast,
+    truncnorm
