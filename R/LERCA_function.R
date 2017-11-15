@@ -1,14 +1,20 @@
-LERCAfullcond <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
-                          mu_priorX = NULL, Sigma_priorX = NULL,
-                          mu_priorY = NULL, Sigma_priorY = NULL,
-                          alpha_priorX = 0.001, beta_priorX = 0.001,
-                          alpha_priorY = 0.001, beta_priorY = 0.001,
-                          starting_cutoffs = NULL,
-                          prop_distribution = c('Uniform', 'Normal'),
-                          normal_percent = 1, plot_every = 0,
-                          comb_probs = c(0.01, 0.5, 0.99),
-                          split_probs = c(0.2, 0.95),
-                          s_upd_probs = c(99 / 100, 1 / 100)) {
+#' Local Exposure-Response Confounding Adjustment.
+#' 
+#' Function that calculates the mean exposure response curve allowing for
+#' differential confounding at different exposure levels.
+#' 
+#' @export
+LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
+                  mu_priorX = NULL, Sigma_priorX = NULL,
+                  mu_priorY = NULL, Sigma_priorY = NULL,
+                  alpha_priorX = 0.001, beta_priorX = 0.001,
+                  alpha_priorY = 0.001, beta_priorY = 0.001,
+                  starting_cutoffs = NULL,
+                  prop_distribution = c('Uniform', 'Normal'),
+                  normal_percent = 1, plot_every = 0,
+                  comb_probs = c(0.01, 0.5, 0.99),
+                  split_probs = c(0.2, 0.95),
+                  s_upd_probs = c(99 / 100, 1 / 100)) {
   
   prop_distribution <- match.arg(prop_distribution)
   
@@ -129,7 +135,7 @@ LERCAfullcond <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                      Sigma_priorY = Sigma_priorY,
                                      mu_priorY = mu_priorY)
       coefs[, cc, ii, , ] <- coef_upd
-
+      
       # ------ Updating the variances.
       
       current_coefs <- coefs[, cc, ii, , ]
@@ -140,7 +146,7 @@ LERCAfullcond <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                  alpha_priorY = alpha_priorY,
                                  beta_priorY = beta_priorY)
       variances[, cc, ii, ] <- var_upd
-
+      
       if (plot_every > 0) {
         if (ii %% plot_every == 0) {
           par(mfrow = c(2, ceiling(K / 2)), mar = rep(2, 4))
