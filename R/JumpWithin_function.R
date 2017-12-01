@@ -9,7 +9,7 @@
 JumpWithin <- function(dta, current_cutoffs, current_alphas, cov_cols,
                        approximate = TRUE, omega = 5000,
                        alpha_probs = c(0.01, 0.5, 0.99),
-                       min_exper_sample = 20) {
+                       min_exper_sample = 20, likelihood_weight) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
             acc = FALSE)
@@ -81,7 +81,9 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, cov_cols,
     AR <- AR - LogLike(D = D, curr_exper_alphas = current_alphas[, ee, ],
                        cov_cols = cov_cols)
   }
-  
+  if (likelihood_weight == 'WBIC') {
+    AR <- AR / log(nrow(dta))
+  }
   
   # log prior difference.
   

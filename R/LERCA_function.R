@@ -16,11 +16,16 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   split_probs = c(0.2, 0.95),
                   s_upd_probs = c(94 / 100, 1 / 100, 5 / 100),
                   alpha_probs = c(0.01, 0.5, 0.99),
-                  min_exper_sample = 20) {
+                  min_exper_sample = 20, 
+                  likelihood_weight = c('Single', 'WBIC')) {
   
   progress <- floor(seq(2, Nsims, length.out = 11))[- 1]
   
   prop_distribution <- match.arg(prop_distribution)
+  likelihood_weight <- match.arg(likelihood_weight)
+  if (likelihood_weight == 'WBIC') {
+    warning("Likelihood is to the exponent 1 / logn")
+  }
   
   num_exper <- K + 1
   num_conf <- length(cov_cols)
@@ -81,7 +86,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                      current_vars = current_vars,
                                      min_exper_sample = min_exper_sample,
                                      prop_distribution = prop_distribution,
-                                     normal_percent = normal_percent)
+                                     normal_percent = normal_percent,
+                                     likelihood_weight = likelihood_weight)
         cutoffs[cc, ii, ] <- exp_upd$cutoffs
         acc[1, 2, cc] <- acc[1, 2, cc] + exp_upd$acc
         
@@ -106,7 +112,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                              current_alphas, approximate = TRUE,
                              cov_cols = cov_cols, omega = omega,
                              comb_probs = comb_probs, split_probs = split_probs,
-                             min_exper_sample = min_exper_sample)
+                             min_exper_sample = min_exper_sample,
+                             likelihood_weight = likelihood_weight)
         
         acc[2, 2, cc] <- acc[2, 2, cc] + jump_upd$acc
         cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
@@ -118,7 +125,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                current_alphas = current_alphas,
                                cov_cols = cov_cols, approximate = TRUE,
                                omega = omega, alpha_probs = alpha_probs,
-                               min_exper_sample = min_exper_sample)
+                               min_exper_sample = min_exper_sample,
+                               likelihood_weight = likelihood_weight)
         
         acc[3, 1, cc] <- acc[3, 1, cc] + jump_upd$acc
         cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
@@ -138,7 +146,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                      Sigma_priorX = Sigma_priorX,
                                      mu_priorX = mu_priorX,
                                      Sigma_priorY = Sigma_priorY,
-                                     mu_priorY = mu_priorY)
+                                     mu_priorY = mu_priorY,
+                                     likelihood_weight = likelihood_weight)
       coefs[, cc, ii, , ] <- coef_upd
       
       # ------ Updating the variances.
@@ -149,7 +158,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                  alpha_priorX = alpha_priorX,
                                  beta_priorX = beta_priorX,
                                  alpha_priorY = alpha_priorY,
-                                 beta_priorY = beta_priorY)
+                                 beta_priorY = beta_priorY,
+                                 likelihood_weight = likelihood_weight)
       variances[, cc, ii, ] <- var_upd
       
       if (plot_every > 0) {

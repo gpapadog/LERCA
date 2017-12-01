@@ -11,7 +11,8 @@
 #' experiment.
 JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
                      cov_cols, omega = 5000, comb_probs = c(0.01, 0.5, 0.99),
-                     split_probs = c(0.2, 0.95), min_exper_sample = 20) {
+                     split_probs = c(0.2, 0.95), min_exper_sample = 20,
+                     likelihood_weight) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
             acc = FALSE)
@@ -109,7 +110,9 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
     AR <- AR - LogLike(D = D, curr_exper_alphas = current_alphas[, ee, ],
                        cov_cols = cov_cols)
   }
-  
+  if (likelihood_weight == 'WBIC') {
+    AR <- AR / log(nrow(dta))
+  }
   
   
   # log prior difference.

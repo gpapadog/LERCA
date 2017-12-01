@@ -1,7 +1,7 @@
 UpdateCoefficients <- function(dta, cov_cols, current_cutoffs,
                                current_alphas, current_vars,
                                Sigma_priorX, mu_priorX,
-                               Sigma_priorY, mu_priorY) {
+                               Sigma_priorY, mu_priorY, likelihood_weight) {
   
   minX <- min(dta$X) - 0.001
   maxX <- max(dta$X) + 0.001
