@@ -103,7 +103,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                    Sigma_priorX = Sigma_priorX,
                                    mu_priorX = mu_priorX,
                                    Sigma_priorY = Sigma_priorY,
-                                   mu_priorY = mu_priorY, omega = omega)
+                                   mu_priorY = mu_priorY, omega = omega,
+                                   likelihood_weight = likelihood_weight)
         alphas[, cc, ii, , ] <- alphas_upd      
         
       } else if (wh_s_upd == 2) {
