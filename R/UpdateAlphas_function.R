@@ -1,12 +1,15 @@
 UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
                          current_coefs, current_vars, Sigma_priorX, mu_priorX,
-                         Sigma_priorY, mu_priorY,
-                         omega) {
+                         Sigma_priorY, mu_priorY, omega, likelihood_weight) {
   
   minX <- min(dta$X) - 0.00001
   maxX <- max(dta$X) + 0.00001
   num_conf <- length(cov_cols)
   cuts <- c(minX, current_cutoffs, maxX)
+  
+  if (likelihood_weight == 'WBIC') {
+    current_vars <- current_vars * log(nrow(dta))
+  }
   
   r <- array(NA, dim = c(2, dim(current_alphaY)))
   
