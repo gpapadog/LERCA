@@ -1,6 +1,6 @@
 UpdateVariances <- function(dta, current_cutoffs, current_coefs,
                             alpha_priorX, beta_priorX, alpha_priorY,
-                            beta_priorY) {
+                            beta_priorY, likelihood_weight) {
   
   minX <- min(dta$X) - 0.001
   maxX <- max(dta$X) + 0.001
@@ -19,16 +19,17 @@ UpdateVariances <- function(dta, current_cutoffs, current_coefs,
     current_coefsX <- current_coefs[1, ee, - 2]
     resid <- D$X - cbind(1, as.matrix(D[, cov_cols])) %*% current_coefsX
     
-    alpha_new <- alpha_priorX + N_ee / 2
-    beta_new <- beta_priorX + sum(resid ^ 2) / 2
+    divide_by <- ifelse(likelihood_weight == 'WBIC', nrow(dta), 1)
+    alpha_new <- alpha_priorX + N_ee / (2 * divide_by)
+    beta_new <- beta_priorX + sum(resid ^ 2) / (2 * divide_by)
     r[1, ee] <- invgamma::rinvgamma(1, shape = alpha_new, rate = beta_new)
     
     # For the outcome model.
     current_coefsY <- current_coefs[2, ee, ]
     resid <- D$Y - cbind(1, D$X, as.matrix(D[, cov_cols])) %*% current_coefsY
     
-    alpha_new <- alpha_priorY + N_ee / 2
-    beta_new <- beta_priorY + sum(resid ^ 2) / 2
+    alpha_new <- alpha_priorY + N_ee / (2 * divide_by)
+    beta_new <- beta_priorY + sum(resid ^ 2) / (2 * divide_by)
     r[2, ee] <- invgamma::rinvgamma(1, shape = alpha_new, rate = beta_new)
   }
   return(r)

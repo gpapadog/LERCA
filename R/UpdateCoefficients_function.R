@@ -8,6 +8,10 @@ UpdateCoefficients <- function(dta, cov_cols, current_cutoffs,
   num_conf <- length(cov_cols)
   K <- length(current_cutoffs)
   
+  if (likelihood_weight == 'WBIC') {
+    current_vars <- current_vars * log(nrow(dta))
+  }
+  
   r <- array(0, dim = c(2, K + 1, num_conf + 2))
   r[1, , 2] <- NA
   

@@ -1,7 +1,7 @@
 UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
                               current_vars, min_exper_sample = 20,
                               prop_distribution = c('Uniform', 'Normal'),
-                              normal_percent = 1) {
+                              normal_percent = 1, likelihood_weight) {
   
   minX <- min(dta$X)
   maxX <- max(dta$X)
@@ -82,6 +82,9 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
                   log = TRUE) -
     mvnfast::dmvn(D$X, mean_curr_exp, sigma = var_curr_exp * diag(nrow(D)),
                   log = TRUE)
+  if (likelihood_weight == 'WBIC') {
+    AR <- AR / log(nrow(dta))
+  }
   
   # --- Prior ratio.
   
