@@ -5,7 +5,7 @@
 \title{CER from MCMC of multiple chains.}
 \usage{
 GetER(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
-  mean_only = FALSE)
+  mean_only = FALSE, other_function = NULL)
 }
 \arguments{
 \item{dta}{The dataset including columns X (treatment), Y (outcome), and
@@ -27,6 +27,9 @@ to 100.}
 \item{mean_only}{Logical. Set to FALSE if we want the individual ER
 predictions. Set to TRUE if we are only interested in the posterior samples
 of the mean ER. Defaults to FALSE.}
+
+\item{other_function}{Whether we want to apply a different function to the
+predictions. Defaults to NULL. Examples include exp(x), log(x).}
 }
 \description{
 When multiple chains are ran, we use GetER to get the posterior CER samples.

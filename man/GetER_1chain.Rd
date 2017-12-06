@@ -5,7 +5,7 @@
 \title{Calculate the CER}
 \usage{
 GetER_1chain(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
-  mean_only = FALSE)
+  mean_only = FALSE, other_function = NULL)
 }
 \arguments{
 \item{dta}{The dataset including columns X (treatment), Y (outcome), and potential
@@ -29,6 +29,9 @@ NULL, a grid of length grid_length over the exposure values will be created.}
 \item{mean_only}{Logical. Set to FALSE if we want the individual ER predictions. Set
 to TRUE if we are only interested in the posterior samples of the mean ER. Defaults
 to FALSE.}
+
+\item{other_function}{Whether we want to apply a different function to the
+predictions. Defaults to NULL. Examples include exp(x), log(x).}
 }
 \description{
 Calculate the average ER function from posterior cutoff and coefficient values from

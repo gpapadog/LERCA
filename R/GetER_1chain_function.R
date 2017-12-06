@@ -23,8 +23,10 @@
 #' @param mean_only Logical. Set to FALSE if we want the individual ER predictions. Set
 #' to TRUE if we are only interested in the posterior samples of the mean ER. Defaults
 #' to FALSE.
+#' @param other_function Whether we want to apply a different function to the
+#' predictions. Defaults to NULL. Examples include exp(x), log(x).
 GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
-                         mean_only = FALSE) {
+                         mean_only = FALSE, other_function = NULL) {
   
   minX <- min(dta$X)
   maxX <- max(dta$X)
@@ -47,7 +49,10 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
     counter <- array(NA, dim = c(length(predict_at), nrow(dta), Nsims))
     dimnames(counter) <- list(predict = predict_at, obs = 1:nrow(dta), sim = 1:Nsims)
   }
-
+  if (!is.null(other_function)) {
+    counter_other <- counter
+  }
+  
   predict_in_range <- which(predict_at >= minX & predict_at <= maxX)
   
   for (ii in 1 : Nsims) {
@@ -68,9 +73,16 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
       } else {
         counter[predict_in_range[pp], , ii] <- predictions
       }
+      if (!is.null(other_function)) {
+        if (mean_only) {
+          counter_other[predict_in_range[pp], ii] <- mean(other_function(predictions))
+        } else {
+          counter_other[predict_in_range[pp], , ii] <- other_function(predictions)
+        }
+      }
     }
   }
-  return(list(x = predict_at, y = counter))
+  return(list(x = predict_at, y = counter, y_other = counter_other))
 }
 
 
