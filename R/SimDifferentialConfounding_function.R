@@ -89,8 +89,9 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   SimDiffConfChecks(num_exper, XCcorr, exper_change, Xrange, varC, meanCexp1)
   
   print('X is generated from a uniform distribution.')
-  print(paste('If X is not from uniform, set overall_meanC to observed, or',
-              'adjust GetbYvalues to correctly calculate the mean of C.'))
+  # If X is not from uniform, adjust GetbYvalues to correctly calculate the
+  # mean of C. Also adjust meanX, varX.
+  
   X <- runif(N, min = Xrange[1], max = Xrange[2])
   E <- as.numeric(cut(X, exper_change, include.lowest = TRUE, right = TRUE))
   dta <- data.table::data.table(X = X, E = E)
@@ -98,9 +99,10 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   print('Data per experiment:')
   print(with(dta, table(E)))
   
-  meanX <- sapply(2:length(exper_change),
+  # Consider if I want to make this equal to the observed.
+  meanX <- sapply(2 : length(exper_change),
                   function(x) mean(exper_change[c(x - 1, x)]))
-  varX <- sapply(2:length(exper_change),
+  varX <- sapply(2 : length(exper_change),
                  function(x) (exper_change[x] - exper_change[x - 1]) ^ 2 / 12)
   XCcov <- sapply(1:num_exper, function(x) XCcorr[, x] * sqrt(varC * varX[x]))
   
