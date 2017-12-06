@@ -92,10 +92,9 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   print(paste('If X is not from uniform, set overall_meanC to observed, or',
               'adjust GetbYvalues to correctly calculate the mean of C.'))
   X <- runif(N, min = Xrange[1], max = Xrange[2])
-  dta <- data.table::data.table(X = X,
-                                E = as.numeric(cut(X, exper_change,
-                                                   include.lowest = TRUE,
-                                                   right = TRUE)))
+  E <- as.numeric(cut(X, exper_change, include.lowest = TRUE, right = TRUE))
+  dta <- data.table::data.table(X = X, E = E)
+  
   print('Data per experiment:')
   print(with(dta, table(E)))
   
