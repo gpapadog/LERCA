@@ -99,21 +99,36 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   print('Data per experiment:')
   print(with(dta, table(E)))
   
-  # Consider if I want to make this equal to the observed.
-  meanX <- sapply(2 : length(exper_change),
-                  function(x) mean(exper_change[c(x - 1, x)]))
-  varX <- sapply(2 : length(exper_change),
-                 function(x) (exper_change[x] - exper_change[x - 1]) ^ 2 / 12)
-  XCcov <- sapply(1:num_exper, function(x) XCcorr[, x] * sqrt(varC * varX[x]))
+  # In order to generate C, we will create the "effective experiment" of each
+  # observation. Even if exper_change defines a point s, if the XCcorr values
+  # do not change, the effective experiment for the exposure is the same.
+  new_exp_exper <- sapply(2 : num_exper, function(x) any(XCcorr[, x] !=
+                                                           XCcorr[, x - 1]))
+  new_exp_exper <- as.numeric(c(TRUE, new_exp_exper))
+  dta[, E_eff_exp := sapply(dta$E, function(x) sum(new_exp_exper[1 : x]))]
   
-  meanC <- XCcontinuous(meanCexp1, XCcov, exper_change, meanX, varX)
+  # Then, we will have the effective experiment change representing the points
+  # where the exposure-covariate correlation actually changes.
+  eff_exper_change <- exper_change[new_exp_exper == 1]
+  eff_num_exper <- length(eff_exper_change) - 1
+  eff_XCcorr <- XCcorr[, new_exp_exper == 1, drop = FALSE]
+  
+  # Consider if I want to make this equal to the observed.
+  meanX <- sapply(2 : length(eff_exper_change), function(x)
+    mean(eff_exper_change[c(x - 1, x)]))
+  varX <- sapply(2 : length(eff_exper_change), function(x)
+    (eff_exper_change[x] - eff_exper_change[x - 1]) ^ 2 / 12)
+  XCcov <- sapply(1 : eff_num_exper, function(x) eff_XCcorr[, x] *
+                    sqrt(varC * varX[x]))
+  
+  meanC <- XCcontinuous(meanCexp1, XCcov, eff_exper_change, meanX, varX)
   
   Cfull <- NULL
   data.table::setkey(dta, E)
   
-  for (ee in 1:num_exper) {
+  for (ee in 1 : eff_num_exper) {
     
-    wh <- with(dta, which(E == ee))
+    wh <- with(dta, which(E_eff_exp == ee))
     X_meanX <- matrix(dta$X[wh] - meanX[ee], ncol = 1)
     covXC_ee <- XCcov[, ee, drop = FALSE]
     
@@ -129,10 +144,17 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   }
   
   dta <- cbind(dta, Cfull)
-  data.table::setnames(dta, names(dta)[- c(1, 2)], paste0('C', 1:num_conf))
+  data.table::setnames(dta, names(dta)[- c(1, 2, 3)], paste0('C', 1 : num_conf))
   
   # Whether we want to use the true overall mean or the observed.
   over_meanC <- meanC
+  if (eff_num_exper < num_exper) {
+    if (overall_meanC == 'true') {
+      warning('overall_meanC set to observed when XCcorr has consecutive columns.')
+    }
+    overall_meanC <- 'observed'
+  }
+  
   if (overall_meanC == 'observed') {
     over_meanC <- colMeans(dta[, 3 : (2 + num_conf), with = FALSE])
     over_meanC <- matrix(over_meanC, nrow = num_conf, ncol = num_exper)
@@ -141,7 +163,7 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   # Generating the outcome 'Y'.
   bY <- GetbYvalues(num_exper, exper_change = exper_change, bYX = bYX,
                     interYexp1 = interYexp1, out_coef = out_coef,
-                    meanC = meanC, weights = meanC_weights,
+                    meanC = over_meanC, weights = meanC_weights,
                     XY_function = XY_function)
   dta$Y <- GenYgivenXC(dta, out_coef, bY, bYX, Ysd, XY_function, XY_spec)
   
@@ -156,6 +178,8 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
     covariances[, , ee] <- cov(cov_dta[cov_dta$E == ee, - 3])
     correlations[, , ee] <- cor(cov_dta[cov_dta$E == ee, - 3])
   }
+  
+  dta[, E_eff_exp := NULL]
   
   return(list(data = dta, covar = covariances, corr = correlations, bY = bY,
               meanC = meanC, XCcov = XCcov, meanX = meanX, varX = varX))

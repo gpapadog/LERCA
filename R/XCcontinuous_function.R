@@ -16,14 +16,16 @@ XCcontinuous <- function(meanCexp1, XCcov, exper_change, meanX, varX) {
   ret_means <- matrix(NA, nrow = num_conf, ncol = num_exper)
   ret_means[, 1] <- meanCexp1
   
-  for (cc in 1:num_conf) {
-    for (ee in 2:num_exper) {
-      
-      term1 <- XCcov[cc, ee - 1] / varX[ee - 1]
-      term1 <- term1 * (exper_change[ee] - meanX[ee - 1])
-      
-      term2 <- - XCcov[cc, ee] / varX[ee] * (exper_change[ee] - meanX[ee])
-      ret_means[cc, ee] <- ret_means[cc, ee - 1] + term1 + term2
+  if (num_exper > 1) {
+    for (cc in 1:num_conf) {
+      for (ee in 2:num_exper) {
+        
+        term1 <- XCcov[cc, ee - 1] / varX[ee - 1]
+        term1 <- term1 * (exper_change[ee] - meanX[ee - 1])
+        
+        term2 <- - XCcov[cc, ee] / varX[ee] * (exper_change[ee] - meanX[ee])
+        ret_means[cc, ee] <- ret_means[cc, ee - 1] + term1 + term2
+      }
     }
   }
   return(ret_means)
