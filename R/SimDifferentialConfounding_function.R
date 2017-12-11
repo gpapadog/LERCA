@@ -105,7 +105,7 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   new_exp_exper <- sapply(2 : num_exper, function(x) any(XCcorr[, x] !=
                                                            XCcorr[, x - 1]))
   new_exp_exper <- as.numeric(c(TRUE, new_exp_exper))
-  dta[, E_eff_exp := sapply(dta$E, function(x) sum(new_exp_exper[1 : x]))]
+  dta$E_eff_exp <- sapply(dta$E, function(x) sum(new_exp_exper[1 : x]))
   
   # Then, we will have the effective experiment change representing the points
   # where the exposure-covariate correlation actually changes.
@@ -143,8 +143,9 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
     Cfull <- rbind(Cfull, C)
   }
   
+  dta <- dta[, c('X', 'E')]
   dta <- cbind(dta, Cfull)
-  data.table::setnames(dta, names(dta)[- c(1, 2, 3)], paste0('C', 1 : num_conf))
+  data.table::setnames(dta, names(dta)[- c(1, 2)], paste0('C', 1 : num_conf))
   
   # Whether we want to use the true overall mean or the observed.
   over_meanC <- meanC
@@ -178,8 +179,6 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
     covariances[, , ee] <- cov(cov_dta[cov_dta$E == ee, - 3])
     correlations[, , ee] <- cor(cov_dta[cov_dta$E == ee, - 3])
   }
-  
-  dta[, E_eff_exp := NULL]
   
   return(list(data = dta, covar = covariances, corr = correlations, bY = bY,
               meanC = meanC, XCcov = XCcov, meanX = meanX, varX = varX))
