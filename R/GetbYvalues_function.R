@@ -34,8 +34,11 @@ GetbYvalues <- function(num_exper, Xrange = NULL, exper_change = NULL, bYX,
   num_conf <- nrow(out_coef)
   XY_function <- match.arg(XY_function)
   
-  if (num_exper <= 1) {
-    stop('Set num_exper greater than 1.')
+  if (num_exper == 1) {
+    return(interYexp1)
+  }
+  if (num_exper < 1) {
+    stop('Set num_exper equal to or greater than 1.')
   }
   if (ncol(out_coef) != num_exper) {
     stop('out_coef not compatible with num_exper.')

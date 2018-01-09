@@ -23,7 +23,7 @@ GenYgivenXC <- function(dataset, out_coef, bY, bYX, Ysd, XY_function,
                         XY_spec = NULL) {
   
   dta <- data.table::copy(dataset)
-  
+
   N <- nrow(dta)
   num_conf <- dim(out_coef)[1]
   num_exper <- dim(out_coef)[2]
@@ -37,8 +37,7 @@ GenYgivenXC <- function(dataset, out_coef, bY, bYX, Ysd, XY_function,
   } else {
     Ymean <- Ymean + with(dta, XY_spec(X) * bYX)
   }
-  
+
   Y <- Ymean + rnorm(N, mean = 0, sd = Ysd[dta$E])
-  
   return(Y)
 }

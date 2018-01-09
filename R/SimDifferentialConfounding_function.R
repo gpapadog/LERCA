@@ -62,7 +62,6 @@
 #'                                   exper_change = c(0, 4, 10),
 #'                                   out_coef = out_coef, bYX = bYX,
 #'                                   XY_function = 'other', XY_spec = f)
-
 SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
                                        exper_change = NULL, meanCexp1 = NULL,
                                        out_coef, interYexp1 = 0, bYX, Ysd = 1,
@@ -74,7 +73,7 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   XY_function <- match.arg(XY_function)
   
   num_conf <- nrow(XCcorr)
-  if (length(Ysd) == 1) {
+  if (length(Ysd) == 1 & num_exper > 1) {
     Ysd <- ScalarToVector(Ysd, num_exper)
   }
   
@@ -102,8 +101,11 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   # In order to generate C, we will create the "effective experiment" of each
   # observation. Even if exper_change defines a point s, if the XCcorr values
   # do not change, the effective experiment for the exposure is the same.
-  new_exp_exper <- sapply(2 : num_exper, function(x) any(XCcorr[, x] !=
-                                                           XCcorr[, x - 1]))
+  new_exp_exper <- NULL
+  if (num_exper > 1) {
+    new_exp_exper <- sapply(2 : num_exper, function(x) any(XCcorr[, x] !=
+                                                             XCcorr[, x - 1]))
+  }
   new_exp_exper <- as.numeric(c(TRUE, new_exp_exper))
   dta$E_eff_exp <- sapply(dta$E, function(x) sum(new_exp_exper[1 : x]))
   
@@ -166,7 +168,8 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
                     interYexp1 = interYexp1, out_coef = out_coef,
                     meanC = over_meanC, weights = meanC_weights,
                     XY_function = XY_function)
-  dta$Y <- GenYgivenXC(dta, out_coef, bY, bYX, Ysd, XY_function, XY_spec)
+  dta$Y <- GenYgivenXC(dataset = dta, out_coef = out_coef, bY = bY, bYX = bYX,
+                       Ysd = Ysd, XY_function = XY_function, XY_spec = XY_spec)
   
   # Calculating covariance and correlation in simulated data.
   cov_dta <- data.frame(Y = dta$Y, X = dta$X, E = dta$E)
