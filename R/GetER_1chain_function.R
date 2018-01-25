@@ -82,6 +82,9 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
       }
     }
   }
+  if (is.null(other_function)) {
+      return(list(x = predict_at, y = counter))
+  }
   return(list(x = predict_at, y = counter, y_other = counter_other))
 }
 
