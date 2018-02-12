@@ -63,7 +63,7 @@ GetER <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
     
     if (mean_only & is.null(other_function)) {  # The mean of the linear terms.
       counter[, cc, ] <- counter_chain$y
-    } else if (mean_only & !is.null(other_function) {  # Mean of linear and function terms.
+    } else if (mean_only & !is.null(other_function)) {  # Mean of linear and function terms.
       counter[, cc, ] <- counter_chain$y
       counter_other[, cc, ] <- counter_chain$y_other
     } else if (!mean_only & is.null(other_function)) {  # Samples of only linear.
