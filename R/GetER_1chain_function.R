@@ -55,37 +55,65 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
   
   predict_in_range <- which(predict_at >= minX & predict_at <= maxX)
   
+  
+  # If we only want ONLY the mean of the linear function, there is simple way.
+  if (mean_only & is.null(other_function)) {
+    
+    # The overall mean of the covariates in the sample.
+    meanC <- colMeans(dta[, cov_cols])
+    
+    for (ii in 1 : Nsims) {
+      current_cutoffs <- cutoffs[ii, ]
+      current_betas <- coefs[ii, , ]
+      for (pp in 1 : length(predict_in_range)) {
+        curr_loc <- predict_at[predict_in_range[pp]]
+        exper <- sum(current_cutoffs <= curr_loc) + 1
+        counter[predict_in_range[pp], ii] <- sum(c(1, curr_loc, meanC) *
+                                                   current_betas[exper, ])
+      }
+    }
+    return(list(x = predict_at, y = counter))
+  }
+  
+  
+  # If we want posterior samples for every observation, or we want a different
+  # function, we must run the following.
+  
   for (ii in 1 : Nsims) {
 
     current_cutoffs <- cutoffs[ii, ]
     current_betas <- coefs[ii, , ]
-
     k <- length(current_cutoffs)
     
     for (pp in 1 : length(predict_in_range)) {
+      
       # Find the experiment that the predicting exposure is in.
       exper <- sum(current_cutoffs <= predict_at[predict_in_range[pp]]) + 1
+      
       D <- des_mat
       D[, 2] <- predict_at[predict_in_range[pp]]
       predictions <- D %*% current_betas[exper, ]
-      if (mean_only) {
+      
+      if (mean_only & !is.null(other_function)) {
         counter[predict_in_range[pp], ii] <- mean(predictions)
-      } else {
+        counter_other[predict_in_range[pp], ii] <- mean(other_function(predictions))
+        res <- list(x = predict_at, y = counter, y_other = counter_other)
+        
+      } else if (!mean_only & is.null(other_function)) {
         counter[predict_in_range[pp], , ii] <- predictions
-      }
-      if (!is.null(other_function)) {
-        if (mean_only) {
-          counter_other[predict_in_range[pp], ii] <- mean(other_function(predictions))
-        } else {
-          counter_other[predict_in_range[pp], , ii] <- other_function(predictions)
-        }
+        res <- list(x = predict_at, y = counter)
+        
+      } else if (!mean_only & !is.null(other_function)) {
+        counter[predict_in_range[pp], , ii] <- predictions
+        counter_other[predict_in_range[pp], , ii] <- other_function(predictions)
+        res <- list(x = predict_at, y = counter, y_other = counter_other)
+        
+      } else {
+        stop('Error. Should never happen.')
       }
     }
   }
-  if (is.null(other_function)) {
-      return(list(x = predict_at, y = counter))
-  }
-  return(list(x = predict_at, y = counter, y_other = counter_other))
+  return(res)
 }
 
 

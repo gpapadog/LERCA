@@ -60,22 +60,25 @@ GetER <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
                                   predict_at = predict_at,
                                   mean_only = mean_only,
                                   other_function = other_function)
-    if (mean_only) {
+    
+    if (mean_only & is.null(other_function)) {  # The mean of the linear terms.
       counter[, cc, ] <- counter_chain$y
-      if (!is.null(other_function)) {
-        counter_other[, cc, ] <- counter_chain$y_other
-      }
-    } else {
+    } else if (mean_only & !is.null(other_function) {  # Mean of linear and function terms.
+      counter[, cc, ] <- counter_chain$y
+      counter_other[, cc, ] <- counter_chain$y_other
+    } else if (!mean_only & is.null(other_function)) {  # Samples of only linear.
       counter[, , cc, ] <- counter_chain$y
-      if (!is.null(other_function)) {
-        counter_other[, , cc, ] <- counter_chain$y_other
-      }
+    } else {  # Samples of linear and other function terms.
+      counter[, , cc, ] <- counter_chain$y
+      counter_other[, , cc, ] <- counter_chain$y_other
     }
   }
   if (is.null(other_function)) {
-    return(list(x = counter_chain$x, y = counter))
+    res <- list(x = counter_chain$x, y = counter)
+  } else {
+    res <- list(x = counter_chain$x, y = counter, y_other = counter_other)
   }
-  return(list(x = counter_chain$x, y = counter, y_other = counter_other))
+  return(res)
 }
 
 
