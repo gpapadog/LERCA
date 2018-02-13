@@ -63,7 +63,7 @@ UpdateCovCoef <- function(dta, cov_cols, current_cutoffs, current_coefs,
     post_mean <- post_var %*% (post_mean + prior_var_inv %*% prior_mean)
     
     gen_coef <- mvnfast::rmvn(1, mu = post_mean, sigma = post_var)
-    r[2, ee, - 1] <- gen_coef
+    r[2, ee, which_in + 1] <- gen_coef
     
   }
   return(r)
