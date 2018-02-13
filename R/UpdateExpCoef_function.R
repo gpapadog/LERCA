@@ -9,14 +9,12 @@ UpdateExpCoef <- function(dta, cov_cols, current_cutoffs, current_coefs,
   # Coefficient of exposure at different experiments, set at current values.
   res <- current_coefs[2, , 2]
   
-  cuts <- c(minX - 0.001, current_cutoffs, maxX + 0.001)
   exact_cuts <- c(minX, current_cutoffs, maxX)
   
   prior_var <- Sigma_priorY[2, 2]
   prior_mean <- mu_priorY[2]
   
   # Defining experiment based on current configuration.
-  dta$E <- sapply(dta$X, function(x) sum(x >= cuts[ee] & x < cuts[ee + 1]))
   n_k <- table(dta$E)
   
   for (ee in 1 : (K + 1)) {

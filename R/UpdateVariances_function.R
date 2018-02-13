@@ -7,14 +7,12 @@ UpdateVariances <- function(dta, current_cutoffs, current_coefs,
   K <- length(current_cutoffs)
   
   exact_cuts <- c(minX, current_cutoffs, maxX)
-  cuts <- c(minX - 0.001, current_cutoffs, maxX + 0.001)
   
   r <- array(0, dim = c(2, K + 1))
   
   for (ee in 1 : (K + 1)) {
     
-    D <- dta
-    D <- subset(D, X >= cuts[ee] & X < cuts[ee + 1])
+    D <- subset(dta, E == ee)
     n_k <- nrow(D)  # number of observations in current experiment.
 
     # For the exposure model.

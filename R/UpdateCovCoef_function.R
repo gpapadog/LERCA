@@ -12,14 +12,11 @@ UpdateCovCoef <- function(dta, cov_cols, current_cutoffs, current_coefs,
   r <- array(0, dim = c(2, K + 1, num_conf + 1))
   r[2, , 1] <- NA  # Intercept of the outcome model.
 
-  cuts <- c(minX - 0.001, current_cutoffs, maxX + 0.001)
   exact_cuts <- c(minX, current_cutoffs, maxX)
   
   for (ee in 1 : (K + 1)) {
     
-    D <- dta
-    D <- subset(D, X >= cuts[ee] & X < cuts[ee + 1])
-    
+    D <- subset(dta, E == ee)
     
     # For the exposure model.
     
