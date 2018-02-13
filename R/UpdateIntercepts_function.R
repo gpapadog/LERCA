@@ -25,7 +25,7 @@ UpdateIntercepts <- function(dta, cov_cols, current_cutoffs, current_coefs,
   for (ee in 1 : (K + 1)) {
     
     D <- subset(dta, E == ee)
-    des_mat <- cbind(1, D$X - exact_cuts[ee], D[, cov_cols])
+    des_mat <- cbind(1, D$X - exact_cuts[ee], as.matrix(D[, cov_cols]))
     use_coefs <- c(0, current_coefs[2, ee, - 1])
     # The intercept as calculated below should be the same as the sum of beta
     # times the interval length.
@@ -36,9 +36,9 @@ UpdateIntercepts <- function(dta, cov_cols, current_cutoffs, current_coefs,
   }
   res[1] <- rnorm(1, mean = post_mean, sd = sqrt(post_var))
   
-  for (ee in 2 : (K + 1)) {
+  for (ee in 1 : K) {
     interval <- exact_cuts[ee + 1] - exact_cuts[ee]
-    res[ee] <- res[ee] + current_coefs[2, ee - 1, 2] * interval
+    res[ee + 1] <- res[ee] + current_coefs[2, ee, 2] * interval
   }
   
   return(res)

@@ -20,9 +20,8 @@ UpdateExpCoef <- function(dta, cov_cols, current_cutoffs, current_coefs,
   for (ee in 1 : (K + 1)) {
     
     D <- subset(dta, E == ee)
-
-    des_mat <- cbind(1, D[, cov_cols])
-    resid <- D$Y - des_mat %*% current_coefs[2, ee, - 2, drop = FALSE]
+    des_mat <- cbind(1, as.matrix(D[, cov_cols]))
+    resid <- D$Y - des_mat %*% matrix(current_coefs[2, ee, - 2], ncol = 1)
     X_s <- D$X - exact_cuts[ee]
     
     
@@ -45,7 +44,8 @@ UpdateExpCoef <- function(dta, cov_cols, current_cutoffs, current_coefs,
     if (ee != K + 1) {
       for (ll in (ee + 1) : (K + 1)) {
         D_ll <- subset(dta, E == ll)
-        des_mat_ll <- cbind(1, D_ll$X - exact_cuts[ll], D_ll[, cov_cols])
+        des_mat_ll <- cbind(1, D_ll$X - exact_cuts[ll],
+                            as.matrix(D_ll[, cov_cols]))
         
         # What are the coefficients of the linear model for the residuals.
         coef_ll <- c(0, res[ll], current_coefs[2, ll, - c(1, 2)])
