@@ -2,10 +2,12 @@ UpdateVariances <- function(dta, current_cutoffs, current_coefs,
                             alpha_priorX, beta_priorX, alpha_priorY,
                             beta_priorY) {
   
-  minX <- min(dta$X) - 0.001
-  maxX <- max(dta$X) + 0.001
+  minX <- min(dta$X)
+  maxX <- max(dta$X)
   K <- length(current_cutoffs)
-  cuts <- c(minX, current_cutoffs, maxX)
+  
+  exact_cuts <- c(minX, current_cutoffs, maxX)
+  cuts <- c(minX - 0.001, current_cutoffs, maxX + 0.001)
   
   r <- array(0, dim = c(2, K + 1))
   
@@ -25,7 +27,7 @@ UpdateVariances <- function(dta, current_cutoffs, current_coefs,
     
     # For the outcome model.
     current_coefsY <- current_coefs[2, ee, ]
-    des_mat <- cbind(1, D$X - cuts[ee], as.matrix(D[, cov_cols]))
+    des_mat <- cbind(1, D$X - exact_cuts[ee], as.matrix(D[, cov_cols]))
     resid <- D$Y - des_mat %*% current_coefsY
     
     alpha_new <- alpha_priorY + n_k / 2
