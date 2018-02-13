@@ -29,7 +29,7 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
   dimnames(coefs) <- list(model = c('Exposure', 'Outcome'),
                           chain = 1 : chains, sample = 1 : Nsims,
                           exper = 1 : num_exper,
-                          covar = c('Int', 'X', 1 : num_conf))
+                          covar = c('Int', 'X-s', 1 : num_conf))
   
   # Starting values for coefficients and variances.
   for (cc in 1 : chains) {
