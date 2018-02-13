@@ -38,16 +38,6 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
                           exper = 1 : num_exper,
                           covar = c('Int', 'X-s', 1 : num_conf))
   
-  # Starting values for coefficients and variances.
-  for (cc in 1 : chains) {
-    for (ee in 1 : (K + 1)) {
-      coefs[1, cc, 1, ee, - 2] <- rnorm(num_conf + 1, mean = 0, sd = 10)
-      coefs[2, cc, 1, ee, ] <- rnorm(num_conf + 2, mean = 0, sd = 10)
-    }
-    variances[1, cc, 1, ] <- invgamma::rinvgamma(num_exper, 10, 20)
-    variances[2, cc, 1, ] <- invgamma::rinvgamma(num_exper, 10, 20)
-  }
-  
   
   # Experiment configuration with starting values from the prior if NULL.
   
@@ -63,6 +53,30 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
     }
   }
   cutoffs[, 1, ] <- starting_cutoffs[1 : chains, ]
+  
+  
+  
+  # Starting values for coefficients and variances.
+  for (cc in 1 : chains) {
+    for (ee in 1 : (K + 1)) {
+      coefs[1, cc, 1, ee, - 2] <- rnorm(num_conf + 1, mean = 0, sd = 10)
+      coefs[2, cc, 1, ee, - 1] <- rnorm(num_conf + 1, mean = 0, sd = 10)
+    }
+    variances[1, cc, 1, ] <- invgamma::rinvgamma(num_exper, 10, 20)
+    variances[2, cc, 1, ] <- invgamma::rinvgamma(num_exper, 10, 20)
+  }
+  # Intercept starting values.
+  for (cc in 1 : chains) {
+    exact_cuts <- c(minX, cutoffs[cc, 1, ], maxX)
+    coefs[2, cc, 1, ee, 1] <- rnorm(1, mean = 0, sd = 10)
+    
+    for (ee in 1 : K) {
+      interval <- exact_cuts[ee + 1] - exact_cuts[ee]
+      coefs[2, cc, 1, ee + 1, 1] <- coefs[2, cc, 1, ee, 1] +
+        coefs[2, cc, 1, ee, 2] * interval
+    }
+  }
+  
 
   return(list(alphas = alphas, cutoffs = cutoffs, coefs = coefs,
               variances = variances))
