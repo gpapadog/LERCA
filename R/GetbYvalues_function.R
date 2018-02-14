@@ -31,7 +31,6 @@ GetbYvalues <- function(num_exper, Xrange = NULL, exper_change = NULL, bYX,
                         interYexp1 = 0, out_coef, meanC, weights = NULL,
                         XY_function = c('linear', 'other')) {
   
-  num_conf <- nrow(out_coef)
   XY_function <- match.arg(XY_function)
   
   if (num_exper == 1) {
@@ -40,8 +39,10 @@ GetbYvalues <- function(num_exper, Xrange = NULL, exper_change = NULL, bYX,
   if (num_exper < 1) {
     stop('Set num_exper equal to or greater than 1.')
   }
-  if (ncol(out_coef) != num_exper) {
-    stop('out_coef not compatible with num_exper.')
+  if (!is.null(out_coef)) {
+    if (ncol(out_coef) != num_exper) {
+      stop('out_coef not compatible with num_exper.')
+    }
   }
   if (is.null(exper_change)) {
     if (is.null(Xrange)) {
@@ -52,18 +53,22 @@ GetbYvalues <- function(num_exper, Xrange = NULL, exper_change = NULL, bYX,
   
   bY <- c(interYexp1, rep(NA, num_exper - 1))
   
-  if (is.null(weights)) {
-    weights <- rep(1, num_exper)
+  if (!is.null(out_coef)) {  # If we have potential confounders.
+    if (is.null(weights)) {
+      weights <- rep(1, num_exper)
+    }
+    weights <- weights / sum(weights)
+    meanC <- sweep(meanC, 2, weights, FUN = '*')
+    overall_meanC <- rowSums(meanC)
   }
-  weights <- weights / sum(weights)
-  meanC <- sweep(meanC, 2, weights, FUN = '*')
-  overall_meanC <- rowSums(meanC)
 
   # Calculating the intercepts.
-  for (ii in 2:num_exper) {
+  for (ii in 2 : num_exper) {
     bY[ii] <- bY[ii - 1]
-    coef_diff <- out_coef[, ii - 1] - out_coef[, ii]
-    bY[ii] <- bY[ii] + sum(coef_diff * overall_meanC)
+    if (!is.null(out_coef)) {
+      coef_diff <- out_coef[, ii - 1] - out_coef[, ii]
+      bY[ii] <- bY[ii] + sum(coef_diff * overall_meanC)
+    }
     if (XY_function == 'linear') {
       bY[ii] <- bY[ii] + (bYX[ii - 1] - bYX[ii]) * exper_change[ii]
     }

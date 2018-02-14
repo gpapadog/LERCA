@@ -26,12 +26,14 @@ GenYgivenXC <- function(dataset, out_coef, bY, bYX, Ysd, XY_function,
 
   N <- nrow(dta)
   num_conf <- dim(out_coef)[1]
-  num_exper <- dim(out_coef)[2]
-
-  covs <- which(names(dta) %in% paste0('C', 1:num_conf))
-  Ymean <- colSums(out_coef[, dta$E] * t(dta[, covs, with = FALSE]))
-  Ymean <- Ymean + bY[dta$E]
+  num_exper <- length(unique(dta$E))
   
+  Ymean <- bY[dta$E]
+  if (!is.null(num_conf)) {
+    covs <- which(names(dta) %in% paste0('C', 1 : num_conf))
+    Ymean <- Ymean + colSums(out_coef[, dta$E] * t(dta[, covs, with = FALSE]))
+  }
+
   if (XY_function == 'linear') {
     Ymean <- Ymean + with(dta, X * bYX[E])
   } else {

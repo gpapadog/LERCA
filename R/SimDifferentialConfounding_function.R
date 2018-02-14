@@ -72,12 +72,12 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   overall_meanC <- match.arg(overall_meanC)
   XY_function <- match.arg(XY_function)
   
-  num_conf <- nrow(XCcorr)
   if (length(Ysd) == 1 & num_exper > 1) {
     Ysd <- ScalarToVector(Ysd, num_exper)
   }
   
-  if (is.null(meanCexp1)) {
+  num_conf <- nrow(XCcorr)
+  if (is.null(meanCexp1) & !is.null(num_conf)) {
     meanCexp1 <- rep(0, num_conf)
   }
   if (is.null(exper_change)) {
@@ -123,46 +123,52 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   XCcov <- sapply(1 : eff_num_exper, function(x) eff_XCcorr[, x] *
                     sqrt(varC * varX[x]))
   
-  meanC <- XCcontinuous(meanCexp1, XCcov, eff_exper_change, meanX, varX)
-  
-  Cfull <- NULL
-  data.table::setkey(dta, E)
-  
-  for (ee in 1 : eff_num_exper) {
+  if (!is.null(num_conf)) {  # If we have potential confounders.
+    meanC <- XCcontinuous(meanCexp1, XCcov, eff_exper_change, meanX, varX)
     
-    wh <- with(dta, which(E_eff_exp == ee))
-    X_meanX <- matrix(dta$X[wh] - meanX[ee], ncol = 1)
-    covXC_ee <- XCcov[, ee, drop = FALSE]
+    Cfull <- NULL
+    data.table::setkey(dta, E)
     
-    mu_bar <- 1 / varX[ee] * covXC_ee %*% t(X_meanX)
-    mu_bar <- sweep(mu_bar, 1, meanC[, ee], FUN = '+')
-    sigma_bar <- diag(varC) - 1 / varX[ee] * covXC_ee %*% t(covXC_ee)
-    
-    C <- matrix(nrow = length(wh), ncol = num_conf)
-    for (ii in 1:length(wh)) {
-      C[ii, ] <- mvnfast::rmvn(1, mu = mu_bar[, ii], sigma = sigma_bar)
+    for (ee in 1 : eff_num_exper) {
+      
+      wh <- with(dta, which(E_eff_exp == ee))
+      X_meanX <- matrix(dta$X[wh] - meanX[ee], ncol = 1)
+      covXC_ee <- XCcov[, ee, drop = FALSE]
+      
+      mu_bar <- 1 / varX[ee] * covXC_ee %*% t(X_meanX)
+      mu_bar <- sweep(mu_bar, 1, meanC[, ee], FUN = '+')
+      sigma_bar <- diag(varC) - 1 / varX[ee] * covXC_ee %*% t(covXC_ee)
+      
+      C <- matrix(nrow = length(wh), ncol = num_conf)
+      for (ii in 1:length(wh)) {
+        C[ii, ] <- mvnfast::rmvn(1, mu = mu_bar[, ii], sigma = sigma_bar)
+      }
+      Cfull <- rbind(Cfull, C)
     }
-    Cfull <- rbind(Cfull, C)
   }
   
   dta <- dta[, c('X', 'E')]
-  dta <- cbind(dta, Cfull)
-  data.table::setnames(dta, names(dta)[- c(1, 2)], paste0('C', 1 : num_conf))
   
-  # Whether we want to use the true overall mean or the observed.
-  over_meanC <- meanC
-  if (eff_num_exper < num_exper) {
-    if (overall_meanC == 'true') {
-      warning('overall_meanC set to observed when XCcorr has consecutive columns.')
+  over_meanC <- NULL
+  if (!is.null(num_conf)) {
+    dta <- cbind(dta, Cfull)
+    data.table::setnames(dta, names(dta)[- c(1, 2)], paste0('C', 1 : num_conf))
+    
+    # Whether we want to use the true overall mean or the observed.
+    over_meanC <- meanC
+    if (eff_num_exper < num_exper) {
+      if (overall_meanC == 'true') {
+        warning('overall_meanC set to observed when XCcorr has consecutive columns.')
+      }
+      overall_meanC <- 'observed'
     }
-    overall_meanC <- 'observed'
+    
+    if (overall_meanC == 'observed') {
+      over_meanC <- colMeans(dta[, 3 : (2 + num_conf), with = FALSE])
+      over_meanC <- matrix(over_meanC, nrow = num_conf, ncol = num_exper)
+    }
   }
-  
-  if (overall_meanC == 'observed') {
-    over_meanC <- colMeans(dta[, 3 : (2 + num_conf), with = FALSE])
-    over_meanC <- matrix(over_meanC, nrow = num_conf, ncol = num_exper)
-  }
-  
+
   # Generating the outcome 'Y'.
   bY <- GetbYvalues(num_exper, exper_change = exper_change, bYX = bYX,
                     interYexp1 = interYexp1, out_coef = out_coef,
@@ -170,11 +176,13 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
                     XY_function = XY_function)
   dta$Y <- GenYgivenXC(dataset = dta, out_coef = out_coef, bY = bY, bYX = bYX,
                        Ysd = Ysd, XY_function = XY_function, XY_spec = XY_spec)
-  
+
   # Calculating covariance and correlation in simulated data.
   cov_dta <- data.frame(Y = dta$Y, X = dta$X, E = dta$E)
-  cov_dta <- cbind(cov_dta, Cfull)
-  
+  if (!is.null(num_conf)) {
+    cov_dta <- cbind(cov_dta, Cfull)
+  }
+
   covariances <- MakeCovArray(num_conf = num_conf, num_exper = num_exper)
   correlations <- covariances
   
@@ -183,6 +191,10 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
     correlations[, , ee] <- cor(cov_dta[cov_dta$E == ee, - 3])
   }
   
+  if (is.null(num_conf)) {
+    return(list(data = dta, covar = covariances, corr = correlations, bY = bY,
+                meanX = meanX, varX = varX))
+  }
   return(list(data = dta, covar = covariances, corr = correlations, bY = bY,
               meanC = meanC, XCcov = XCcov, meanX = meanX, varX = varX))
 }
@@ -191,24 +203,34 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
 
 SimDiffConfChecks <- function(num_exper, XCcorr, exper_change, Xrange,
                               varC, meanCexp1) {
-  if (num_exper != ncol(XCcorr)) {
-    stop('Number of columns in XCcor should be equal to num_exper.')
+  
+  if (!is.null(XCcorr)) {
+    if (num_exper != ncol(XCcorr)) {
+      stop('Number of columns in XCcor should be equal to num_exper.')
+    }
+    if (length(varC) != nrow(XCcorr)) {
+      step('VarC is a vector of length equal to the number of confounders.')
+    }
+    if (length(meanCexp1) != nrow(XCcorr)) {
+      stop('meanCexp1 should be a vector of length number of covariates.')
+    }
   }
   if (any(exper_change < Xrange[1]) | any(exper_change > Xrange[2])) {
     stop('exper_change should be inside Xrange.')
   }
-  if (length(varC) != nrow(XCcorr)) {
-    step('VarC is a vector of length equal to the number of confounders.')
-  }
-  if (length(meanCexp1) != nrow(XCcorr)) {
-    stop('meanCexp1 should be a vector of length number of covariates.')
-  }
 }
 
 MakeCovArray <- function(num_conf, num_exper) {
+  if (is.null(num_conf)) {
+    num_conf <- 0
+    colnames <- c('Y', 'X')
+  } else {
+    colnames <- c('Y', 'X', paste0('C', 1 : num_conf))
+  }
   covariances <- array(NA, dim = c(num_conf + 2, num_conf + 2, num_exper))
-  dimnames(covariances)[[1]] <- c('Y', 'X', paste0('C', 1:num_conf))
+  dimnames(covariances)[[1]] <- colnames
+
   dimnames(covariances)[[2]] <- dimnames(covariances)[[1]]
-  dimnames(covariances)[3] <- list(exper = 1:num_exper)
+  dimnames(covariances)[3] <- list(exper = 1 : num_exper)
   return(covariances)
 }
