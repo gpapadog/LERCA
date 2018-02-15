@@ -48,7 +48,6 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
       sum(dta$X >= sj1star & dta$X <= sj2) == 0 |
       sum(dta$X >= sj & dta$X <= sj1star) == 0) {
     return(list(cutoffs = current_cutoffs, acc = FALSE))
-    cutoffs[cc, ii, ] <- current_cutoffs
   }
   
   # Otherwise, observations changed experiment, calcualting the AR.
