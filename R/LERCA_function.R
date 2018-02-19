@@ -24,7 +24,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
   prop_distribution <- match.arg(prop_distribution)
   
   num_exper <- K + 1
-  num_conf <- ifelse(is.null(cov_cols), 0, length(cov_cols))
+  num_conf <- length(cov_cols)
   minX <- min(dta$X)
   maxX <- max(dta$X)
   
@@ -50,13 +50,10 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                        num_conf = num_conf, omega = omega, minX = minX,
                        maxX = maxX, starting_cutoffs = starting_cutoffs,
                        starting_alphas = starting_alphas)
+  alphas <- arrays$alphas
   cutoffs <- arrays$cutoffs
   coefs <- arrays$coefs
   variances <- arrays$variances
-  alphas <- NULL
-  if (num_conf > 0) {
-    alphas <- arrays$alphas
-  }
   
   acc <- array(0, dim = c(3, 2, chains))
   dimnames(acc) <- list(kind = c('separate', 'jumpOver', 'jumpWithin'),
@@ -73,7 +70,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
 
       current_coefs <- coefs[, cc, ii - 1, , ]
       current_vars <- variances[, cc, ii - 1, ]
-      current_alphas <- alphas[, cc, ii - 1, , ]  # NULL if no covariates.
+      current_alphas <- alphas[, cc, ii - 1, , ]
       current_cutoffs <- cutoffs[cc, ii - 1, ]
       
       # Defining experiment based on current configuration.
@@ -81,10 +78,21 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       dta$E <- sapply(dta$X, function(x) sum(x >= cuts))
 
       
+      # ------ Updating the variances.
+      
+      var_upd <- UpdateVariances(dta = dta, current_cutoffs = current_cutoffs,
+                                 current_coefs = current_coefs,
+                                 alpha_priorX = alpha_priorX,
+                                 beta_priorX = beta_priorX,
+                                 alpha_priorY = alpha_priorY,
+                                 beta_priorY = beta_priorY)
+      variances[, cc, ii, ] <- var_upd
+      current_vars <- variances[, cc, ii, ]
+      
+      
       # ------ Updating the covariates' coefficients.
       
-      # If no covariates exist, we only update the intercepts of the exposure.
-      
+      # Set current coefficients to the previous ones.
       coefs[, cc, ii, , ] <- coefs[, cc, ii - 1, , ]
       coef_upd <- UpdateCovCoef(dta = dta, cov_cols = cov_cols,
                                 current_cutoffs = current_cutoffs,
@@ -98,32 +106,36 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       coefs[1, cc, ii, , - 2] <- coef_upd[1 , , ]
       coefs[2, cc, ii, , - c(1, 2)] <- coef_upd[2, , - 1]
       
+      # ----- TAKE OUT --- setting equal to true values.
+      coefs[2, cc, ii, , - c(1, 2)] <- t(out_coef)
+      
       current_coefs <- coefs[, cc, ii, , ]
       
       
-      # ------ Updating the variances.
+      # ------ Updating the exposure slopes.
       
-      var_upd <- UpdateVariances(dta = dta, current_cutoffs = current_cutoffs,
+      slope_upd <- UpdateExpCoef(dta = dta, cov_cols = cov_cols,
+                                 current_cutoffs = current_cutoffs,
                                  current_coefs = current_coefs,
-                                 cov_cols = cov_cols,
-                                 alpha_priorX = alpha_priorX,
-                                 beta_priorX = beta_priorX,
-                                 alpha_priorY = alpha_priorY,
-                                 beta_priorY = beta_priorY)
-      variances[, cc, ii, ] <- var_upd
-      current_vars <- variances[, cc, ii, ]
+                                 current_vars = current_vars,
+                                 Sigma_priorY = Sigma_priorY,
+                                 mu_priorY = mu_priorY)
+      coefs[2, cc, ii, , 2] <- slope_upd
+      current_coefs <- coefs[, cc, ii, , ]
       
       
-      # ----- Updating the intercept and slope of outcome models.
+      # ------ Updating the intercepts.
       
-      int_slope_upd <- UpdateIntSlope(dta = dta, cov_cols = cov_cols,
-                                      current_cutoffs = current_cutoffs,
-                                      current_coefs = current_coefs,
-                                      current_vars = current_vars,
-                                      Sigma_priorY = Sigma_priorY,
-                                      mu_priorY = mu_priorY)
+      inter_upd <- UpdateIntercepts(dta = dta, cov_cols = cov_cols,
+                                    current_cutoffs = current_cutoffs,
+                                    current_coefs = current_coefs,
+                                    current_vars = current_vars,
+                                    Sigma_priorY = Sigma_priorY,
+                                    mu_priorY = mu_priorY)
+      coefs[2, cc, ii, , 1] <- inter_upd
+      current_coefs <- coefs[, cc, ii, , ]
       
-
+      
       
       cutoffs[cc, ii, ] <- cutoffs[cc, ii - 1, ]
       alphas[, cc, ii, , ] <- alphas[, cc, ii - 1, , ]
