@@ -68,12 +68,11 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
 
     for (ii in 1 : Nsims) {
       current_cutoffs <- cutoffs[ii, ]
-      exact_cuts <- c(minX, current_cutoffs, maxX)
       current_betas <- coefs[ii, , ]
       for (pp in 1 : length(predict_in_range)) {
         curr_loc <- predict_at[predict_in_range[pp]]
         exper <- sum(current_cutoffs <= curr_loc) + 1
-        curr_pred <- c(1, curr_loc - exact_cuts[exper])
+        curr_pred <- c(1, curr_loc)
         if (num_conf > 0) {
           curr_pred <- c(curr_pred, meanC)
         }
@@ -91,7 +90,6 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
   for (ii in 1 : Nsims) {
 
     current_cutoffs <- cutoffs[ii, ]
-    exact_cuts <- c(minX, current_cutoffs, maxX)
     current_betas <- coefs[ii, , ]
     k <- length(current_cutoffs)
     
@@ -101,7 +99,7 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
       exper <- sum(current_cutoffs <= predict_at[predict_in_range[pp]]) + 1
       
       D <- des_mat
-      D[, 2] <- predict_at[predict_in_range[pp]] - exact_cuts[exper]
+      D[, 2] <- predict_at[predict_in_range[pp]]
       predictions <- D %*% current_betas[exper, ]
       
       if (mean_only & !is.null(other_function)) {
