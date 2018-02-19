@@ -3,27 +3,29 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
   
   # Alphas. Starting values are from the prior.
   
-  alphas <- array(NA, dim = c(2, chains, Nsims, num_exper, num_conf))
-  dimnames(alphas) <- list(model = c('Exposure', 'Outcome'),
-                           chain = 1 : chains, sample = 1 : Nsims,
-                           exper = 1 : num_exper, conf = 1 : num_conf)
-  
-  if (is.null(starting_alphas)) {
-    starting_alphas <- array(NA, dim = c(2, chains, num_exper, num_conf))
-    for (cc in 1 : chains) {
-      starting_alphas[2, cc, , ] <- sample(c(0, 1), num_exper * num_conf,
-                                           prob = c(omega + 1, 2 * omega),
-                                           replace = TRUE)
-      for (ee in 1 : (K + 1)) {
-        for (jj in 1 : num_conf) {
-          probs <- ifelse(starting_alphas[2, cc, ee, jj] == 0, omega, 1)
-          starting_alphas[1, cc, ee, jj] <- sample(c(0, 1), 1,
-                                                   prob = c(probs, 1))
+  if (num_conf > 0) {
+    alphas <- array(NA, dim = c(2, chains, Nsims, num_exper, num_conf))
+    dimnames(alphas) <- list(model = c('Exposure', 'Outcome'),
+                             chain = 1 : chains, sample = 1 : Nsims,
+                             exper = 1 : num_exper, conf = 1 : num_conf)
+    
+    if (is.null(starting_alphas)) {
+      starting_alphas <- array(NA, dim = c(2, chains, num_exper, num_conf))
+      for (cc in 1 : chains) {
+        starting_alphas[2, cc, , ] <- sample(c(0, 1), num_exper * num_conf,
+                                             prob = c(omega + 1, 2 * omega),
+                                             replace = TRUE)
+        for (ee in 1 : (K + 1)) {
+          for (jj in 1 : num_conf) {
+            probs <- ifelse(starting_alphas[2, cc, ee, jj] == 0, omega, 1)
+            starting_alphas[1, cc, ee, jj] <- sample(c(0, 1), 1,
+                                                     prob = c(probs, 1))
+          }
         }
       }
     }
+    alphas[, , 1, , ] <- starting_alphas
   }
-  alphas[, , 1, , ] <- starting_alphas
   
   # Coefficient and variance values.
   
@@ -32,11 +34,15 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
                               chain = 1 : chains, sample = 1 : Nsims,
                               exper = 1 : num_exper)
   
+  cov_names <- c('Int', 'X')
+  if (num_conf > 0) {
+    cov_names <- c(cov_names, paste0('C', 1 : num_conf))
+  }
   coefs <- array(0, dim = c(2, chains, Nsims, num_exper, num_conf + 2))
   dimnames(coefs) <- list(model = c('Exposure', 'Outcome'),
                           chain = 1 : chains, sample = 1 : Nsims,
-                          exper = 1 : num_exper,
-                          covar = c('Int', 'X-s', 1 : num_conf))
+                          exper = 1 : num_exper, covar = cov_names)
+  coefs[1, , , , 2] <- NA  # No exposure coefficient for exposure model.
   
   
   # Experiment configuration with starting values from the prior if NULL.
@@ -77,7 +83,9 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
     }
   }
   
-
-  return(list(alphas = alphas, cutoffs = cutoffs, coefs = coefs,
-              variances = variances))
+  if (num_conf > 0) {
+    return(list(alphas = alphas, cutoffs = cutoffs, coefs = coefs,
+                variances = variances))
+  }
+  return(list(cutoffs = cutoffs, coefs = coefs, variances = variances))
 }
