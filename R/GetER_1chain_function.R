@@ -37,10 +37,12 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
   }
   
   num_conf <- dim(coefs)[3] - 2
-  covs_cols <- which(names(dta) %in% paste0('C', 1:num_conf))
-  des_mat <- cbind(Int = 1, X = dta$X, dta[, covs_cols])
-  des_mat <- as.matrix(des_mat)
-  
+  des_mat <- cbind(Int = 1, X = dta$X)
+  if (num_conf > 0) {
+    cov_cols <- which(names(dta) %in% paste0('C', 1:num_conf))
+    des_mat <- cbind(des_mat, as.matrix(dta[, cov_cols]))
+  }
+
   # Array where the predicted counterfactual values are saved.
   if (mean_only) {
     counter <- array(NA, dim = c(length(predict_at), Nsims))
@@ -60,15 +62,21 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
   if (mean_only & is.null(other_function)) {
     
     # The overall mean of the covariates in the sample.
-    meanC <- colMeans(dta[, cov_cols])
-    
+    if (num_conf > 0) {
+      meanC <- colMeans(dta[, cov_cols])
+    }
+
     for (ii in 1 : Nsims) {
       current_cutoffs <- cutoffs[ii, ]
       current_betas <- coefs[ii, , ]
       for (pp in 1 : length(predict_in_range)) {
         curr_loc <- predict_at[predict_in_range[pp]]
         exper <- sum(current_cutoffs <= curr_loc) + 1
-        counter[predict_in_range[pp], ii] <- sum(c(1, curr_loc, meanC) *
+        curr_pred <- c(1, curr_loc)
+        if (num_conf > 0) {
+          curr_pred <- c(curr_pred, meanC)
+        }
+        counter[predict_in_range[pp], ii] <- sum(curr_pred *
                                                    current_betas[exper, ])
       }
     }
