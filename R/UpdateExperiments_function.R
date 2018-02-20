@@ -1,11 +1,12 @@
 UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
                               current_vars, min_exper_sample = 20,
                               prop_distribution = c('Uniform', 'Normal'),
-                              normal_percent = 1) {
+                              normal_percent = 1, mu_priorY, Sigma_priorY) {
   
   prop_distribution <- match.arg(prop_distribution)
   minX <- min(dta$X)
   maxX <- max(dta$X)
+  num_conf <- ifelse(is.null(cov_cols), 0, length(cov_cols))
 
   K <- length(current_cutoffs)
   cuts <- c(minX, current_cutoffs, maxX)
