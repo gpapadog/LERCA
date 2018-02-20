@@ -130,8 +130,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       coefs[2, cc, ii, , c(1, 2)] <- int_slope_upd
       
       
-      #       # ----- Update experiment configuration and alphas.
-      #       
+      # ----- Update experiment configuration and alphas.
+            
       wh_s_upd <- sample(c(1, 2, 3), 1, prob = s_upd_probs)
       acc[wh_s_upd, 1, cc] <- acc[wh_s_upd, 1, cc] + 1
       
@@ -143,7 +143,9 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                      current_vars = current_vars,
                                      min_exper_sample = min_exper_sample,
                                      prop_distribution = prop_distribution,
-                                     normal_percent = normal_percent)
+                                     normal_percent = normal_percent,
+                                     mu_priorY = mu_priorY,
+                                     Sigma_priorY = Sigma_priorY)
         cutoffs[cc, ii, ] <- exp_upd$cutoffs
         acc[1, 2, cc] <- acc[1, 2, cc] + exp_upd$acc
         
