@@ -210,3 +210,15 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
               variances = variances, acc = acc,
               acc_percent = acc[, 2, ] / acc[, 1, ]))
 }
+
+
+# predict_at <- seq(minX, maxX, length.out = 100)
+# y_predict <- rep(NA, length(predict_at))
+# for (xx in 1 : 100) {
+#   cuts <- c(min(dta$X), cutoffs[cc, ii, ])
+#   wh_exper <- sum(cutoffs[cc, ii, ] < predict_at[xx]) + 1
+#   pred_vec <- c(1, predict_at[xx] - cuts[wh_exper])
+#   y_predict[xx] <- sum(coefs[2, cc, ii, wh_exper, ] * pred_vec)
+# }
+# plot(predict_at, y_predict, type = 'l', main = 'ER - one iteration')
+# abline(v = cuts[- 1])

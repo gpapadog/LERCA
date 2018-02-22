@@ -37,7 +37,8 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   new_exper <- sapply(dta$X, function(x) sum(x < prop_cuts))
   if (length(table(new_exper)) < K + 1 |
       any(table(new_exper) < min_exper_sample)) {
-    return(list(cutoffs = current_cutoffs, acc = FALSE))
+    return(list(cutoffs = current_cutoffs, acc = FALSE,
+                proposed_cutoffs = proposed_cutoffs))
   }
   
   
@@ -128,7 +129,8 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   if (nrow(D) == 0 |
       sum(dta$X >= sj1star & dta$X <= sj2) == 0 |
       sum(dta$X >= sj & dta$X <= sj1star) == 0) {
-    return(list(cutoffs = current_cutoffs, acc = FALSE))
+    return(list(cutoffs = current_cutoffs, acc = FALSE,
+                proposed_cutoffs = proposed_cutoffs))
   }
   
   # Experiment that data were in before and are proposed to be in.
@@ -230,8 +232,10 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   logAR <- logAR - log(unif_range_rev[2] - unif_range_rev[1])
   
   if (log(runif(1)) < logAR) {
-    return(list(cutoffs = proposed_cutoffs, acc = TRUE))
+    return(list(cutoffs = proposed_cutoffs, acc = TRUE,
+                proposed_cutoffs = proposed_cutoffs))
   } else {
-    return(list(cutoffs = current_cutoffs, acc = FALSE))
+    return(list(cutoffs = current_cutoffs, acc = FALSE,
+                proposed_cutoffs = proposed_cutoffs))
   }
 }
