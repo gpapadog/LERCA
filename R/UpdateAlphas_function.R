@@ -3,10 +3,11 @@ UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
                          Sigma_priorY, mu_priorY,
                          omega) {
   
-  minX <- min(dta$X) - 0.00001
-  maxX <- max(dta$X) + 0.00001
+  minX <- min(dta$X)
+  maxX <- max(dta$X)
   num_conf <- length(cov_cols)
-  cuts <- c(minX, current_cutoffs, maxX)
+  cuts <- c(minX - 0.001, current_cutoffs, maxX + 0.001)
+  exact_cuts <- c(minX, current_cutoffs, maxX)
   
   r <- array(NA, dim = c(2, dim(current_alphaY)))
   
@@ -28,11 +29,11 @@ UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
       
       prior_var <- Sigma_priorX[jj + 1, jj + 1]
       prior_sd <- sqrt(prior_var)
-      post_var <- sum(curr_cov ^ 2) / current_vars[1, ee]
-      post_var <- 1 / (post_var + 1 / prior_var)
+      post_var <- 1 / prior_var + sum(curr_cov ^ 2) / current_vars[1, ee]
+      post_var <- 1 / post_var
       
-      post_mean <- sum(curr_cov * resid) / current_vars[1, ee]
-      post_mean <- post_mean + mu_priorX[jj + 1] / prior_var
+      post_mean <- mu_priorX[jj + 1] / prior_var
+      post_mean <- post_mean + sum(curr_cov * resid) / current_vars[1, ee]
       post_mean <- post_var * post_mean
       
       alpha1 <- corresp_alphaY * log(1 / 2) +
@@ -53,16 +54,17 @@ UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
       alpha0 <- ifelse(corresp_alphaX == 0, 1 / 2, 1 / (omega + 1))
       
       curr_cov <- D[, cov_cols[jj]]
-      other_cov <- cbind(Int = 1, X = D$X, as.matrix(D[, cov_cols[- jj]]))
+      other_cov <- cbind(Int = 1, X_s = D$X - exact_cuts[ee])
+      other_cov <- cbind(other_cov, as.matrix(D[, cov_cols[- jj]]))
       resid <- D$Y - other_cov %*% current_coefs[2, ee, - (jj + 2)]
       
       prior_var <- Sigma_priorY[jj + 2, jj + 2]
       prior_sd <- sqrt(prior_var)
-      post_var <- sum(curr_cov ^ 2) / current_vars[2, ee]
-      post_var <- 1 / (post_var + 1 / prior_var)
+      post_var <- 1 / prior_var + sum(curr_cov ^ 2) / current_vars[2, ee]
+      post_var <- 1 / post_var
       
-      post_mean <- sum(curr_cov * resid) / current_vars[2, ee]
-      post_mean <- post_mean + mu_priorY[jj + 2] / prior_var
+      post_mean <- mu_priorY[jj + 2] / prior_var
+      post_mean <- post_mean + sum(curr_cov * resid) / current_vars[2, ee]
       post_mean <- post_var * post_mean
       
       alpha1 <- corresp_alphaX * log(omega / (omega + 1)) +
