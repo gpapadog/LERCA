@@ -3,6 +3,7 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
   
   # Alphas. Starting values are from the prior.
   
+  alphas <- NULL
   if (num_conf > 0) {
     alphas <- array(NA, dim = c(2, chains, Nsims, num_exper, num_conf))
     dimnames(alphas) <- list(model = c('Exposure', 'Outcome'),
@@ -83,9 +84,6 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
     }
   }
   
-  if (num_conf > 0) {
-    return(list(alphas = alphas, cutoffs = cutoffs, coefs = coefs,
-                variances = variances))
-  }
-  return(list(cutoffs = cutoffs, coefs = coefs, variances = variances))
+  return(list(alphas = alphas, cutoffs = cutoffs, coefs = coefs,
+              variances = variances))
 }
