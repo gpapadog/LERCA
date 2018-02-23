@@ -23,6 +23,7 @@
 GetER <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
                   mean_only = FALSE, other_function = NULL) {
   
+  dta <- as.data.frame(dta)
   minX <- min(dta$X)
   maxX <- max(dta$X)
   
