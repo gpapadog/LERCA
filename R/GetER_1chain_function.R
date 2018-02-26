@@ -28,6 +28,7 @@
 GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
                          mean_only = FALSE, other_function = NULL) {
   
+  dta <- as.data.frame(dta)
   minX <- min(dta$X)
   maxX <- max(dta$X)
   Nsims <- dim(coefs)[1]
@@ -39,8 +40,9 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
   num_conf <- dim(coefs)[3] - 2
   des_mat <- cbind(Int = 1, X = dta$X)
   if (num_conf > 0) {
-    cov_cols <- which(names(dta) %in% paste0('C', 1:num_conf))
+    cov_cols <- which(names(dta) %in% paste0('C', 1 : num_conf))
     des_mat <- cbind(des_mat, as.matrix(dta[, cov_cols]))
+    meanC <- colMeans(dta[, cov_cols])
   }
 
   # Array where the predicted counterfactual values are saved.
@@ -60,11 +62,6 @@ GetER_1chain <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 1
   
   # If we only want ONLY the mean of the linear function, there is simple way.
   if (mean_only & is.null(other_function)) {
-    
-    # The overall mean of the covariates in the sample.
-    if (num_conf > 0) {
-      meanC <- colMeans(dta[, cov_cols])
-    }
 
     for (ii in 1 : Nsims) {
       current_cutoffs <- cutoffs[ii, ]

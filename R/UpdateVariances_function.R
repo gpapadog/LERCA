@@ -10,7 +10,7 @@ UpdateVariances <- function(dta, current_cutoffs, current_coefs, cov_cols,
   for (ee in 1 : (K + 1)) {
     
     D <- subset(dta, E == ee)
-    n_k <- nrow(D)  # number of observations in current experiment.
+    n_k <- nrow(D)  # Number of observations in current experiment.
 
     # For the exposure model.
     current_coefsX <- current_coefs[1, ee, - 2]
