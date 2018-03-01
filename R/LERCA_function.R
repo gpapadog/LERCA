@@ -149,9 +149,12 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                      mu_priorY = mu_priorY,
                                      Sigma_priorY = Sigma_priorY)
         cutoffs[cc, ii, ] <- exp_upd$cutoffs
-        acc[1, 2, cc] <- acc[1, 2, cc] + exp_upd$acc
         current_cutoffs <- cutoffs[cc, ii, ]
-        
+        acc[1, 2, cc] <- acc[1, 2, cc] + exp_upd$acc
+        # If the move was accepted, we need to update intercepts and slopes.
+        coefs[, cc, ii, , ] <- exp_upd$coefs
+        current_coefs <- coefs[, cc, ii, , ]
+
         # ---- Update alphas.
 
         if (num_conf > 0) {
@@ -222,7 +225,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
 #   cuts <- c(min(dta$X), cutoffs[cc, ii, ])
 #   wh_exper <- sum(cutoffs[cc, ii, ] < predict_at[xx]) + 1
 #   pred_vec <- c(1, predict_at[xx] - cuts[wh_exper])
-#   y_predict[xx] <- sum(coefs[2, cc, ii, wh_exper, ] * pred_vec)
+#   y_predict[xx] <- sum(coefs[2, cc, ii, wh_exper, 1 : 2] * pred_vec)
 # }
 # plot(predict_at, y_predict, type = 'l', main = 'ER - one iteration')
 # abline(v = cuts[- 1])
