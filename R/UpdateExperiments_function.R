@@ -7,6 +7,11 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   minX <- min(dta$X)
   maxX <- max(dta$X)
   num_conf <- ifelse(is.null(cov_cols), 0, length(cov_cols))
+  r <- list(cutoffs = current_cutoffs, current_cutoffs = current_cutoffs,
+            acc = FALSE, coefs = current_coefs)
+  if (min_exper_sample < 1) {
+    stop('Set min_exper_sample to 1 or higher.')
+  }
 
   K <- length(current_cutoffs)
   cuts <- c(minX, current_cutoffs, maxX)
@@ -29,16 +34,17 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
                                  sd = prop_sd)
     proposed_cutoffs[wh_cut] <- val
   }
-  
-  # If we have less than min_exper_sample data, we reject.
+
+  r$proposed_cutoffs <- proposed_cutoffs
   prop_cuts <- c(minX - 0.001, proposed_cutoffs, maxX + 0.001)
   exact_prop_cuts <- c(minX, proposed_cutoffs, maxX)
   
+  # If we have less than min_exper_sample data, we reject.
+
   new_exper <- sapply(dta$X, function(x) sum(x < prop_cuts))
   if (length(table(new_exper)) < K + 1 |
       any(table(new_exper) < min_exper_sample)) {
-    return(list(cutoffs = current_cutoffs, acc = FALSE,
-                proposed_cutoffs = proposed_cutoffs))
+    return(r)
   }
   
   
@@ -123,15 +129,6 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   # 3A - Exposure model: Only data between current and proposed value.
   
   D <- subset(dta, X >= sj1 & X <= sj1star | X >= sj1star & X <= sj1)
-  
-  # If no observations changed experiment, or new cutoff without data in
-  # between, do not accept.
-  if (nrow(D) == 0 |
-      sum(dta$X >= sj1star & dta$X <= sj2) == 0 |
-      sum(dta$X >= sj & dta$X <= sj1star) == 0) {
-    return(list(cutoffs = current_cutoffs, acc = FALSE,
-                proposed_cutoffs = proposed_cutoffs))
-  }
   
   # Experiment that data were in before and are proposed to be in.
   curr_exper <- sum(current_cutoffs < D$X[1]) + 1
@@ -232,10 +229,9 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   logAR <- logAR - log(unif_range_rev[2] - unif_range_rev[1])
   
   if (log(runif(1)) < logAR) {
-    return(list(cutoffs = proposed_cutoffs, acc = TRUE,
-                proposed_cutoffs = proposed_cutoffs))
-  } else {
-    return(list(cutoffs = current_cutoffs, acc = FALSE,
-                proposed_cutoffs = proposed_cutoffs))
+    r$acc <- TRUE
+    r$cutoffs <- proposed_cutoffs
+    r$coefs <- proposed_coefs
   }
+  return(r)
 }
