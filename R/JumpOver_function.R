@@ -14,7 +14,7 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
                      split_probs = c(0.2, 0.95), min_exper_sample = 20) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
-            acc = FALSE)
+            acc = FALSE, current_cutoffs = current_cutoffs)
   
   if (!approximate) {
     stop('approximate FALSE not supported yet.')
@@ -39,6 +39,19 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
   new_s <- runif(1, min = cuts[split_exper], max = cuts[split_exper + 1])
   proposed_cutoffs <- sort(c(new_s, current_cutoffs[- wh_cut]))
   prop_cuts <- c(minX, proposed_cutoffs, maxX)
+  
+
+  # --- If the proposed value creates experiment with no data, do not accept.
+
+  dta$new_exper <- sapply(dta$X, function(x) sum(prop_cuts < x))
+  dta$prev_exper <- sapply(dta$X, function(x) sum(cuts < x))
+  dta$new_exper[dta$new_exper == 0] <- 1
+  dta$prev_exper[dta$prev_exper == 0] <- 1
+  
+  if (length(unique(dta$new_exper)) < K + 1 |
+      any(table(dta$new_exper) < min_exper_sample)) {
+    return(r)
+  }
   
   
   # --- What will the proposed alphas be.
@@ -84,17 +97,6 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
   # ----- Calculating the probability of acceptance ------ #
   
   AR <- 0
-  dta$new_exper <- sapply(dta$X, function(x) sum(prop_cuts < x))
-  dta$prev_exper <- sapply(dta$X, function(x) sum(cuts < x))
-  dta$new_exper[dta$new_exper == 0] <- 1
-  dta$prev_exper[dta$prev_exper == 0] <- 1
-
-  # If the proposed value creates experiment with no data, do not accept.
-  if (length(unique(dta$new_exper)) < K + 1 |
-      any(table(dta$new_exper) < min_exper_sample)) {
-    return(r)
-  }
-  
   
   # log-Likelihood difference.
   
