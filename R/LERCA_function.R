@@ -32,6 +32,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
     s_upd_probs <- c(1, 0, 0)
     warning('Update for experiment configuration without alphas.')
   } else {
+    warning('JumpWithin can be improved to propose slopes.')
     if (any(abs(colMeans(dta[, cov_cols])) > 1e-10)) {
       stop('Covariates need to be centered.')
     }
@@ -81,6 +82,73 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       current_vars <- variances[, cc, ii - 1, ]
       current_alphas <- alphas[, cc, ii - 1, , ]  # NULL if no covariates.
       current_cutoffs <- cutoffs[cc, ii - 1, ]
+
+      # ----- MCMC 1 : Update experiment configuration and alphas. ------ #
+      
+      wh_s_upd <- sample(c(1, 2, 3), 1, prob = s_upd_probs)
+      acc[wh_s_upd, 1, cc] <- acc[wh_s_upd, 1, cc] + 1
+      
+      # Updating the experiment configuration and alphas separately.
+      if (wh_s_upd == 1) {
+        
+        exp_upd <- UpdateExperiments(dta = dta, cov_cols = cov_cols,
+                                     current_cutoffs = current_cutoffs,
+                                     current_coefs = current_coefs,
+                                     current_vars = current_vars,
+                                     min_exper_sample = min_exper_sample,
+                                     prop_distribution = prop_distribution,
+                                     normal_percent = normal_percent,
+                                     mu_priorY = mu_priorY,
+                                     Sigma_priorY = Sigma_priorY)
+        cutoffs[cc, ii, ] <- exp_upd$cutoffs
+        current_cutoffs <- cutoffs[cc, ii, ]
+        coefs[, cc, ii, , ] <- exp_upd$coefs  # Current or proposed.
+        current_coefs <- coefs[, cc, ii, , ]
+        acc[1, 2, cc] <- acc[1, 2, cc] + exp_upd$acc
+        
+        if (num_conf > 0) {
+          current_alphaY <- alphas[2, cc, ii - 1, , ]
+          alphas_upd <- UpdateAlphas(dta = dta, cov_cols = cov_cols,
+                                     current_cutoffs = current_cutoffs,
+                                     current_alphaY = current_alphaY,
+                                     current_coefs = current_coefs,
+                                     current_vars = current_vars,
+                                     Sigma_priorX = Sigma_priorX,
+                                     mu_priorX = mu_priorX,
+                                     Sigma_priorY = Sigma_priorY,
+                                     mu_priorY = mu_priorY, omega = omega)
+          alphas[, cc, ii, , ] <- alphas_upd
+        }
+        
+      # Simulatinuous update: Jumping over the current experiment.
+      } else if (wh_s_upd == 2) {
+        
+        jump_upd <- JumpOver(dta = dta, current_cutoffs = current_cutoffs,
+                             current_alphas, approximate = TRUE,
+                             cov_cols = cov_cols, omega = omega,
+                             comb_probs = comb_probs, split_probs = split_probs,
+                             min_exper_sample = min_exper_sample)
+        
+        acc[2, 2, cc] <- acc[2, 2, cc] + jump_upd$acc
+        cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
+        alphas[, cc, ii, , ] <- jump_upd$new_alphas
+       
+      # Simulatinuous update: Jumping within the current experiment.
+      } else if (wh_s_upd == 3) {
+        
+        jump_upd <- JumpWithin(dta = dta, current_cutoffs = current_cutoffs,
+                               current_alphas = current_alphas,
+                               current_coefs = current_coefs,
+                               cov_cols = cov_cols, approximate = TRUE,
+                               omega = omega, alpha_probs = alpha_probs,
+                               min_exper_sample = min_exper_sample)
+        
+        acc[3, 1, cc] <- acc[3, 1, cc] + jump_upd$acc
+        cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
+        alphas[, cc, ii, , ] <- jump_upd$new_alphas
+        coefs[, cc, ii, , ] <- jump_upd$new_coefs
+      }
+      
       
       # Defining experiment based on current configuration.
       cuts <- c(minX - 0.001, current_cutoffs, maxX + 0.001)
@@ -132,74 +200,6 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       coefs[2, cc, ii, , c(1, 2)] <- int_slope_upd
       
       
-      # ----- Update experiment configuration and alphas.
-      
-      wh_s_upd <- sample(c(1, 2, 3), 1, prob = s_upd_probs)
-      acc[wh_s_upd, 1, cc] <- acc[wh_s_upd, 1, cc] + 1
-      
-      if (wh_s_upd == 1) {
-        
-        exp_upd <- UpdateExperiments(dta = dta, cov_cols = cov_cols,
-                                     current_cutoffs = current_cutoffs,
-                                     current_coefs = current_coefs,
-                                     current_vars = current_vars,
-                                     min_exper_sample = min_exper_sample,
-                                     prop_distribution = prop_distribution,
-                                     normal_percent = normal_percent,
-                                     mu_priorY = mu_priorY,
-                                     Sigma_priorY = Sigma_priorY)
-        cutoffs[cc, ii, ] <- exp_upd$cutoffs
-        current_cutoffs <- cutoffs[cc, ii, ]
-        acc[1, 2, cc] <- acc[1, 2, cc] + exp_upd$acc
-        # If the move was accepted, we need to update intercepts and slopes.
-        coefs[, cc, ii, , ] <- exp_upd$coefs
-        current_coefs <- coefs[, cc, ii, , ]
-
-        # ---- Update alphas.
-
-        if (num_conf > 0) {
-          current_alphaY <- alphas[2, cc, ii - 1, , ]
-          alphas_upd <- UpdateAlphas(dta = dta, cov_cols = cov_cols,
-                                     current_cutoffs = current_cutoffs,
-                                     current_alphaY = current_alphaY,
-                                     current_coefs = current_coefs,
-                                     current_vars = current_vars,
-                                     Sigma_priorX = Sigma_priorX,
-                                     mu_priorX = mu_priorX,
-                                     Sigma_priorY = Sigma_priorY,
-                                     mu_priorY = mu_priorY, omega = omega)
-          alphas[, cc, ii, , ] <- alphas_upd
-        }
-      }
-      
-      
-      
-      #     } else if (wh_s_upd == 2) {
-      #       
-      #       jump_upd <- JumpOver(dta = dta, current_cutoffs = current_cutoffs,
-      #                            current_alphas, approximate = TRUE,
-      #                            cov_cols = cov_cols, omega = omega,
-      #                            comb_probs = comb_probs, split_probs = split_probs,
-      #                            min_exper_sample = min_exper_sample)
-      #       
-      #       acc[2, 2, cc] <- acc[2, 2, cc] + jump_upd$acc
-      #       cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
-      #       alphas[, cc, ii, , ] <- jump_upd$new_alphas
-      #       
-      #     } else if (wh_s_upd == 3) {  # Within experiment simultaneous update.
-      #       
-      #       jump_upd <- JumpWithin(dta = dta, current_cutoffs = current_cutoffs,
-      #                              current_alphas = current_alphas,
-      #                              cov_cols = cov_cols, approximate = TRUE,
-      #                              omega = omega, alpha_probs = alpha_probs,
-      #                              min_exper_sample = min_exper_sample)
-      #       
-      #       acc[3, 1, cc] <- acc[3, 1, cc] + jump_upd$acc
-      #       cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
-      #       alphas[, cc, ii, , ] <- jump_upd$new_alphas
-      #       
-      #     }
-      #     
       
       if (plot_every > 0) {
         if (ii %% plot_every == 0) {
