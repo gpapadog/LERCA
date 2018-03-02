@@ -33,6 +33,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
     warning('Update for experiment configuration without alphas.')
   } else {
     warning('JumpWithin can be improved to propose slopes.')
+    warning('JumpOver is not performed with ensuring continuous ER.')
     if (any(abs(colMeans(dta[, cov_cols])) > 1e-10)) {
       stop('Covariates need to be centered.')
     }
