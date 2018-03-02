@@ -1,18 +1,34 @@
+#' Simultaneous move of experiment and alphas within the current boundaries.
+#' 
+#' Proposing a simultaneous move of the experiment configuration and inclusion
+#' indicators maintaining the order of the experiment configuration. If the
+#' move is accepted, the coefficients are adjusted to ensure a continuous
+#' exposure-response curve.
+#' 
+#' @param current_cutoffs The current values of the experiment configuration.
+#' Vector of length K.
+#' @param current_alphas The current values of the inclusion indicators. Array
+#' of dimensions 2 (exposure & outcome model), experiments, covariates.
+#' @param current_coefs The current values of the coefficients. Array of
+#' dimensions 2 (exposure & outcome model), experiments, and coefficients
+#' (intercept, slope, covariates).
+#' @param cov_cols The indices of the columns including the covariates.
 #' @param approximate Logical. If set to true the BIC will be used to calculate
 #' the marginal likelihood. FALSE not supported yet.
-#' @param cov_cols The indices of the columns including the covariates.
+#' @param omega The omega parameter of the BAC prior.
 #' @param alpha_probs The probability that a proposed alpha is equal to 1, when
 #' 0, 1, and 2 alphas of the surrounding experiments are equal to 1. Vector of
 #' length 3. Defaults to (0.01, 0.5, 0.99).
 #' @param min_exper_sample The minimum number of observations within an
 #' experiment. Defaults to 20.
-JumpWithin <- function(dta, current_cutoffs, current_alphas, cov_cols,
-                       approximate = TRUE, omega = 5000,
+#' 
+JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
+                       cov_cols, approximate = TRUE, omega = 5000,
                        alpha_probs = c(0.01, 0.5, 0.99),
                        min_exper_sample = 20) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
-            acc = FALSE)
+            new_coefs = current_coefs, acc = FALSE)
   
   if (!approximate) {
     stop('approximate FALSE not supported yet.')
@@ -135,11 +151,35 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, cov_cols,
   AR <- AR - sum(cross_sum * log(proposal_probs)[wh_rows, wh_cols])
   
   # ------- Accepting or rejecting the move. -------- #
-  if (log(runif(1)) < AR) {
-    r$new_cutoffs <- proposed_cutoffs
-    r$new_alphas <- proposed_alphas
-    r$acc <- TRUE
+  acc <- (log(runif(1)) < AR)
+  
+  if (!acc) {
+    return(r)
   }
+  
+  # Else, we have accepted the move.
+  r$new_cutoffs <- proposed_cutoffs
+  r$new_alphas <- proposed_alphas
+  r$acc <- TRUE
+  
+  # Ensuring that the ER is continuous.
+  # Changing the slopes of the new experiments, and the intercept between them.
+  # I do not need to change the coefficients of the covariates.
+  
+  # Using the same code as in UpdateExperiments function.
+  
+  sj <- cuts[wh_cut]
+  sj1 <- cuts[wh_cut + 1]
+  sj1star <- prop_cuts[wh_cut + 1]
+  sj2 <- cuts[wh_cut + 2]
+  
+  prop_slopes <- ProposeSlopes(wh_cut = wh_cut, current_coefs = current_coefs,
+                               cuts = cuts, sj1star = sj1star, sj1 = sj1,
+                               sj = sj, sj2 = sj2)
+  proposed_coefs <- prop_slopes$proposed_coefs
+
+  r$new_coefs <- proposed_coefs
+  
   return(r)
 }
 
