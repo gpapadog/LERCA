@@ -64,10 +64,10 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
   dimnames(proposed_alphas) <- dimnames(current_alphas)
   
   # The alphas that remain the same.
-  prev_exper_same <- setdiff(exper_choice, split_exper) # Prev exper number.
-  start_same <- cuts[prev_exper_same] # Starting cutoff.
-  curr_exper_same <- which(prop_cuts %in% start_same) # Proposed experiment.
-  proposed_alphas[, curr_exper_same, ] <- current_alphas[, prev_exper_same, ]
+  curr_exper_same <- setdiff(exper_choice, split_exper) # Prev exper number.
+  start_same <- cuts[curr_exper_same] # Starting cutoff.
+  prop_exper_same <- which(prop_cuts %in% start_same) # Proposed experiment.
+  proposed_alphas[, prop_exper_same, ] <- current_alphas[, curr_exper_same, ]
   
   # The alphas that get split.
   which_new_s <- which(prop_cuts == new_s)
@@ -212,69 +212,15 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
   r$new_alphas <- proposed_alphas
   r$acc <- TRUE
   
-  # We need to set new coefficients.
-  proposed_coefs <- current_coefs
-  proposed_coefs[2, , 1 : 2] <- NA
-  
-  # Intercept of first experiment.
-  proposed_coefs[2, 1, 1] <- current_coefs[2, 1, 1]
-  
-  # Intercept and slope of unchanged experiments, intercept of next.
-  for (ee in 1 : length(curr_exper_same)) {
-    set_exper <- curr_exper_same[ee]
-    proposed_coefs[2, set_exper, ] <- current_coefs[2, prev_exper_same[ee], ]
-    
-    if (set_exper <= K) {
-      next_int <- proposed_coefs[2, set_exper, 1]
-      interval <- prop_cuts[set_exper + 1] - prop_cuts[set_exper]
-      next_int <- next_int + proposed_coefs[2, set_exper, 2] * interval
-      proposed_coefs[2, set_exper + 1, 1] <- next_int
-    }
-  }
-  
-  # Intercept of combined experiment.
-  set_exper <- prop_exper_comb
-  proposed_coefs[2, set_exper, 1] <- current_coefs[2, curr_exper_comb[1], 1]
-  
-  # Intercept of next to combined.
-  if (curr_exper_comb[2] < K + 1) {
-    next_int <- current_coefs[2, curr_exper_comb[2] + 1, 1]
-    proposed_coefs[2, set_exper + 1, 1] <- next_int
-  } else {
-    next_int <- proposed_coefs[2, set_exper, 1]
-    interval <- cuts[curr_exper_comb[1] + 1] - cuts[curr_exper_comb[1]]
-    next_int <- next_int + current_coefs[2, curr_exper_comb[1], 2] * interval
-    interval <- cuts[curr_exper_comb[2] + 1] - cuts[curr_exper_comb[2]]
-    next_int <- next_int + current_coefs[2, curr_exper_comb[2], 2] * interval
-  }
-
-  # Slope of the combined experiment.
-  interval <- prop_cuts[set_exper + 1] - prop_cuts[set_exper]
-  slope_set <- (next_int - proposed_coefs[2, set_exper, 1]) / interval
-  proposed_coefs[2, set_exper, 2] <- slope_set
-  
-  # Slope of the first experiment that was split.
-  u <- rnorm(1, mean = 0, sd = tune)
-  slope_split <- current_coefs[2, curr_exper_split, 2] + u
-  proposed_coefs[2, prop_exper_split[1], 2] <- slope_split
-  
-  # Intercept of the second experiment that was split.
-  set_exper <- prop_exper_split[2]
-  interval <- prop_cuts[set_exper] - prop_cuts[set_exper - 1]
-  next_int <- proposed_coefs[2, set_exper - 1, 1]
-  next_int <- next_int + proposed_coefs[2, set_exper - 1, 2] * interval
-  proposed_coefs[2, set_exper, 1] <- next_int
-  
-  # Setting the slope of the second experiment that was split.
-  next_int <- current_coefs[2, curr_exper_split, 1]
-  interval <- cuts[curr_exper_split + 1] - cuts[curr_exper_split]
-  next_int <- next_int + current_coefs[2, curr_exper_split, 2] * interval
-  
-  interval <- prop_cuts[set_exper + 1] - prop_cuts[set_exper]
-  slope_split <- (next_int - proposed_coefs[2, set_exper, 1]) / interval
-  proposed_coefs[2, set_exper, 2] <- slope_split
-  
-  
+  proposed_coefs <- JumpOverCoef(current_coefs = current_coefs,
+                                 prop_cuts = prop_cuts, cuts = cuts,
+                                 prop_exper_same = prop_exper_same,
+                                 curr_exper_same = curr_exper_same,
+                                 curr_exper_comb = curr_exper_comb,
+                                 prop_exper_comb = prop_exper_comb,
+                                 curr_exper_split = curr_exper_split,
+                                 prop_exper_split = prop_exper_split,
+                                 tune = tune)$proposed_coefs
   r$new_coefs <- proposed_coefs
   
   return(r)
