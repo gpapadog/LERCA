@@ -1,3 +1,6 @@
+#' @param current_coefs The current coefficients in an array format, with
+#' dimensions corresponding to the exposure/outcome model, the experiments, and
+#' the coefficient (intercept, slope, covariates).
 #' @param approximate Logical. If set to true the BIC will be used to calculate
 #' the marginal likelihood. FALSE not supported yet.
 #' @param cov_cols The indices of the columns including the covariates.
@@ -9,12 +12,14 @@
 #' of the current experiment is 0, and when it is 1. Vector of length 2.
 #' @param min_exper_sample The minimum number of observations within an
 #' experiment.
-JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
-                     cov_cols, omega = 5000, comb_probs = c(0.01, 0.5, 0.99),
+JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
+                     approximate = TRUE, cov_cols, omega = 5000,
+                     comb_probs = c(0.01, 0.5, 0.99), tune = 0.05,
                      split_probs = c(0.2, 0.95), min_exper_sample = 20) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
-            acc = FALSE, current_cutoffs = current_cutoffs)
+            new_coefs = current_coefs, acc = FALSE,
+            current_cutoffs = current_cutoffs)
   
   if (!approximate) {
     stop('approximate FALSE not supported yet.')
@@ -195,13 +200,83 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
   wh_cols <- as.numeric(colnames(t(tab_alpha_comb))) + 1
   AR <- AR - sum(t(tab_alpha_comb) * log(probs_alpha_split)[wh_rows, wh_cols])
   
-  
   # ------- Accepting or rejecting the move. -------- #
-  if (log(runif(1)) < AR) {
-    r$new_cutoffs <- proposed_cutoffs
-    r$new_alphas <- proposed_alphas
-    r$acc <- TRUE
+  acc <- (log(runif(1)) < AR)
+  if (!acc) {
+    return(r)
   }
+  
+  # Else we accepted the move.
+  
+  r$new_cutoffs <- proposed_cutoffs
+  r$new_alphas <- proposed_alphas
+  r$acc <- TRUE
+  
+  # We need to set new coefficients.
+  proposed_coefs <- current_coefs
+  proposed_coefs[2, , 1 : 2] <- NA
+  
+  # Intercept of first experiment.
+  proposed_coefs[2, 1, 1] <- current_coefs[2, 1, 1]
+  
+  # Intercept and slope of unchanged experiments, intercept of next.
+  for (ee in 1 : length(curr_exper_same)) {
+    set_exper <- curr_exper_same[ee]
+    proposed_coefs[2, set_exper, ] <- current_coefs[2, prev_exper_same[ee], ]
+    
+    if (set_exper <= K) {
+      next_int <- proposed_coefs[2, set_exper, 1]
+      interval <- prop_cuts[set_exper + 1] - prop_cuts[set_exper]
+      next_int <- next_int + proposed_coefs[2, set_exper, 2] * interval
+      proposed_coefs[2, set_exper + 1, 1] <- next_int
+    }
+  }
+  
+  # Intercept of combined experiment.
+  set_exper <- prop_exper_comb
+  proposed_coefs[2, set_exper, 1] <- current_coefs[2, curr_exper_comb[1], 1]
+  
+  # Intercept of next to combined.
+  if (curr_exper_comb[2] < K + 1) {
+    next_int <- current_coefs[2, curr_exper_comb[2] + 1, 1]
+    proposed_coefs[2, set_exper + 1, 1] <- next_int
+  } else {
+    next_int <- proposed_coefs[2, set_exper, 1]
+    interval <- cuts[curr_exper_comb[1] + 1] - cuts[curr_exper_comb[1]]
+    next_int <- next_int + current_coefs[2, curr_exper_comb[1], 2] * interval
+    interval <- cuts[curr_exper_comb[2] + 1] - cuts[curr_exper_comb[2]]
+    next_int <- next_int + current_coefs[2, curr_exper_comb[2], 2] * interval
+  }
+
+  # Slope of the combined experiment.
+  interval <- prop_cuts[set_exper + 1] - prop_cuts[set_exper]
+  slope_set <- (next_int - proposed_coefs[2, set_exper, 1]) / interval
+  proposed_coefs[2, set_exper, 2] <- slope_set
+  
+  # Slope of the first experiment that was split.
+  u <- rnorm(1, mean = 0, sd = tune)
+  slope_split <- current_coefs[2, curr_exper_split, 2] + u
+  proposed_coefs[2, prop_exper_split[1], 2] <- slope_split
+  
+  # Intercept of the second experiment that was split.
+  set_exper <- prop_exper_split[2]
+  interval <- prop_cuts[set_exper] - prop_cuts[set_exper - 1]
+  next_int <- proposed_coefs[2, set_exper - 1, 1]
+  next_int <- next_int + proposed_coefs[2, set_exper - 1, 2] * interval
+  proposed_coefs[2, set_exper, 1] <- next_int
+  
+  # Setting the slope of the second experiment that was split.
+  next_int <- current_coefs[2, curr_exper_split, 1]
+  interval <- cuts[curr_exper_split + 1] - cuts[curr_exper_split]
+  next_int <- next_int + current_coefs[2, curr_exper_split, 2] * interval
+  
+  interval <- prop_cuts[set_exper + 1] - prop_cuts[set_exper]
+  slope_split <- (next_int - proposed_coefs[2, set_exper, 1]) / interval
+  proposed_coefs[2, set_exper, 2] <- slope_split
+  
+  
+  r$new_coefs <- proposed_coefs
+  
   return(r)
 }
 
