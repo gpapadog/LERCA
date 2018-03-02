@@ -125,6 +125,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       } else if (wh_s_upd == 2) {
         
         jump_upd <- JumpOver(dta = dta, current_cutoffs = current_cutoffs,
+                             current_coefs = current_coefs,
                              current_alphas, approximate = TRUE,
                              cov_cols = cov_cols, omega = omega,
                              comb_probs = comb_probs, split_probs = split_probs,
@@ -133,6 +134,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
         acc[2, 2, cc] <- acc[2, 2, cc] + jump_upd$acc
         cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
         alphas[, cc, ii, , ] <- jump_upd$new_alphas
+        coefs[, cc, ii, , ] <- jump_upd$new_coefs
        
       # Simulatinuous update: Jumping within the current experiment.
       } else if (wh_s_upd == 3) {
