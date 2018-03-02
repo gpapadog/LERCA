@@ -24,6 +24,7 @@
 #' 
 JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
                        cov_cols, approximate = TRUE, omega = 5000,
+                       Sigma_priorY, mu_priorY,
                        alpha_probs = c(0.01, 0.5, 0.99),
                        min_exper_sample = 20) {
   

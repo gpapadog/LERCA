@@ -17,7 +17,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   split_probs = c(0.2, 0.95),
                   s_upd_probs = c(94 / 100, 1 / 100, 5 / 100),
                   alpha_probs = c(0.01, 0.5, 0.99),
-                  min_exper_sample = 20) {
+                  min_exper_sample = 20, tune = 0.05) {
   
   progress <- floor(seq(2, Nsims, length.out = 11))[- 1]
   dta <- as.data.frame(dta)
@@ -32,8 +32,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
     s_upd_probs <- c(1, 0, 0)
     warning('Update for experiment configuration without alphas.')
   } else {
-    warning('JumpWithin can be improved to propose slopes.')
-    warning('JumpOver is not performed with ensuring continuous ER.')
+    warning('JumpOver can be improved to propose slopes.')
     if (any(abs(colMeans(dta[, cov_cols])) > 1e-10)) {
       stop('Covariates need to be centered.')
     }
@@ -128,14 +127,16 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                              current_coefs = current_coefs,
                              current_alphas, approximate = TRUE,
                              cov_cols = cov_cols, omega = omega,
-                             comb_probs = comb_probs, split_probs = split_probs,
-                             min_exper_sample = min_exper_sample)
+                             Sigma_priorY = Sigma_priorY,
+                             mu_priorY = mu_priorY, comb_probs = comb_probs,
+                             split_probs = split_probs,
+                             min_exper_sample = min_exper_sample, tune = tune)
         
         acc[2, 2, cc] <- acc[2, 2, cc] + jump_upd$acc
         cutoffs[cc, ii, ] <- jump_upd$new_cutoffs
         alphas[, cc, ii, , ] <- jump_upd$new_alphas
         coefs[, cc, ii, , ] <- jump_upd$new_coefs
-       
+        
       # Simulatinuous update: Jumping within the current experiment.
       } else if (wh_s_upd == 3) {
         
@@ -143,7 +144,9 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                                current_alphas = current_alphas,
                                current_coefs = current_coefs,
                                cov_cols = cov_cols, approximate = TRUE,
-                               omega = omega, alpha_probs = alpha_probs,
+                               omega = omega, Sigma_priorY = Sigma_priorY,
+                               mu_priorY = mu_priorY,
+                               alpha_probs = alpha_probs,
                                min_exper_sample = min_exper_sample)
         
         acc[3, 1, cc] <- acc[3, 1, cc] + jump_upd$acc
@@ -221,7 +224,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
               acc_percent = acc[, 2, ] / acc[, 1, ]))
 }
 
-
+# 
 # predict_at <- seq(min(dta$X), max(dta$X), length.out = 100)
 # y_predict <- rep(NA, length(predict_at))
 # for (xx in 1 : 100) {

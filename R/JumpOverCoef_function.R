@@ -64,6 +64,13 @@ JumpOverCoef <- function(current_coefs, prop_cuts, cuts, prop_exper_same,
   slope_split <- (next_int - proposed_coefs[2, set_exper, 1]) / interval
   proposed_coefs[2, set_exper, 2] <- slope_split
   
-  return(list(proposed_coefs = proposed_coefs, u = u))
+  
+  # Lastly, what would the u be for the reversed move.
+  # This will be used in the calculation of the proposal ratio.
+  
+  u_rev <- current_coefs[2, curr_exper_comb[1], 2]
+  u_rev <- u_rev - proposed_coefs[2, prop_exper_comb, 2]
+  
+  return(list(proposed_coefs = proposed_coefs, u = u, u_rev = u_rev))
   
 }
