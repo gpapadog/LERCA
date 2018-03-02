@@ -15,7 +15,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   normal_percent = 1, plot_every = 0,
                   comb_probs = c(0.01, 0.5, 0.99),
                   split_probs = c(0.2, 0.95),
-                  s_upd_probs = c(94 / 100, 1 / 100, 5 / 100),
+                  s_upd_probs = c(0.8, 0.1, 0.1),
                   alpha_probs = c(0.01, 0.5, 0.99),
                   min_exper_sample = 20, tune = 0.05) {
   
