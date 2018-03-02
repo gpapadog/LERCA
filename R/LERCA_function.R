@@ -68,7 +68,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
   
   acc <- array(0, dim = c(3, 2, chains))
   dimnames(acc) <- list(kind = c('separate', 'jumpOver', 'jumpWithin'),
-                        num = c('attempt', 'success'), chain = 1 : chains)  
+                        num = c('attempt', 'success'), chain = 1 : chains)
   
   # -------- STEP 3. MCMC. ---------- #
   

@@ -1,9 +1,9 @@
-#' Simultaneous move of experiment and alphas within the current boundaries.
+#' Simultaneous move of experiment, alphas and slopes within experiment.
 #' 
 #' Proposing a simultaneous move of the experiment configuration and inclusion
-#' indicators maintaining the order of the experiment configuration. If the
-#' move is accepted, the coefficients are adjusted to ensure a continuous
-#' exposure-response curve.
+#' indicators maintaining the order of the experiment configuration. New values
+#' for the slopes are proposed ensuring continuous ER. We use the likelihood
+#' integrating out the coefficients of the covariates and variance terms.
 #' 
 #' @param current_cutoffs The current values of the experiment configuration.
 #' Vector of length K.
@@ -38,16 +38,22 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
   maxX <- max(dta$X)
   K <- length(current_cutoffs)
   
+  # ------ STEP 1. Proposing the cutoffs. -------- #
+  
   # Which cutoff we will try to change simultaneously with alphas.
   wh_cut <- sample(K, 1)
-  cuts <- c(minX, current_cutoffs, maxX)
+  cuts <- c(minX - 0.001, current_cutoffs, maxX + 0.001)
+  exact_cuts <- c(minX, current_cutoffs, maxX)
 
   # Proposed cutoff values.
-  new_s <- runif(1, min = cuts[wh_cut], max = cuts[wh_cut + 2])
+  new_s <- runif(1, min = exact_cuts[wh_cut], max = exact_cuts[wh_cut + 2])
   proposed_cutoffs <- current_cutoffs
   proposed_cutoffs[wh_cut] <- new_s
-  prop_cuts <- c(minX, proposed_cutoffs, maxX)
+  exact_prop_cuts <- c(minX, proposed_cutoffs, maxX)
+  prop_cuts <- c(minX - 0.001, proposed_cutoffs, maxX + 0.001)
   
+  
+  # ------ STEP 2. Proposing the alphas. -------- #
   
   # --- What will the proposed alphas be.
   proposed_alphas <- array(NA, dim = dim(current_alphas))
@@ -58,7 +64,6 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
   proposed_alphas[, - exper_change, ] <- current_alphas[, - exper_change, ]
   
   # The alphas that are generated.
-  
   for (mm in 1 : 2) {
     for (jj in 1 : dim(current_alphas)[3]) {
       number_ones <- sum(current_alphas[mm, exper_change, jj])
@@ -70,56 +75,76 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
   }
   
   
-  # ----- Calculating the probability of acceptance ------ #
+  # ------ STEP 3. Proposing the coefficients. -------- #
   
-  AR <- 0
-  dta$new_exper <- sapply(dta$X, function(x) sum(prop_cuts < x))
-  dta$prev_exper <- sapply(dta$X, function(x) sum(cuts < x))
-  dta$new_exper[dta$new_exper == 0] <- 1
-  dta$prev_exper[dta$prev_exper == 0] <- 1
+  # Changing the slopes of the new experiments, and the intercept between them.
+  
+  sj <- exact_cuts[wh_cut]
+  sj1 <- exact_cuts[wh_cut + 1]
+  sj1star <- exact_prop_cuts[wh_cut + 1]
+  sj2 <- exact_cuts[wh_cut + 2]
+  
+  prop_slopes <- ProposeSlopes(wh_cut = wh_cut, current_coefs = current_coefs,
+                               cuts = exact_cuts, sj1star = sj1star, sj1 = sj1,
+                               sj = sj, sj2 = sj2)
+  proposed_coefs <- prop_slopes$proposed_coefs
+  unif_range <- prop_slopes$unif_range
+  unif_range_rev <- prop_slopes$unif_range_rev
+  
   
   # If the proposed value creates experiment with not sufficient data, reject.
+  
+  dta$new_exper <- sapply(dta$X, function(x) sum(prop_cuts < x))
+  dta$prev_exper <- sapply(dta$X, function(x) sum(cuts < x))
+  
   if (length(unique(dta$new_exper)) < K + 1 |
       any(table(dta$new_exper) < min_exper_sample)) {
     return(r)
   }
   
   
-  # log-Likelihood difference.
+  # ----- STEP 4. Calculating the probability of acceptance ------ #
+  
+  AR <- 0
+
+  # Step 4a. The log Likelihood difference.
   
   for (ee in exper_change) {
     D <- subset(dta, new_exper == ee)
     AR <- AR + LogLike(D = D, curr_exper_alphas = proposed_alphas[, ee, ],
-                       cov_cols = cov_cols)
+                       curr_coefsY = proposed_coefs[2, ee, 1 : 2],
+                       X_s_cut = exact_prop_cuts[ee], cov_cols = cov_cols)
   }
   for (ee in exper_change) {
     D <- subset(dta, prev_exper == ee)
     AR <- AR - LogLike(D = D, curr_exper_alphas = current_alphas[, ee, ],
-                       cov_cols = cov_cols)
+                       curr_coefsY = current_coefs[2, ee, 1 : 2],
+                       X_s_cut = exact_cuts[ee], cov_cols = cov_cols)
   }
   
   
-  # log prior difference.
+  # Step 4b. The log prior difference.
   
   # For the cutoffs.
-  diff_prop <- sapply(2 : (K + 2), function(x) prop_cuts[x] - prop_cuts[x - 1])
+  diff_prop <- sapply(2 : (K + 2), function(x) exact_prop_cuts[x] - exact_prop_cuts[x - 1])
   AR <- AR + sum(log(diff_prop))
   
-  diff_curr <- sapply(2 : (K + 2), function(x) cuts[x] - cuts[x - 1])
+  diff_curr <- sapply(2 : (K + 2), function(x) exact_cuts[x] - exact_cuts[x - 1])
   AR <- AR - sum(log(diff_curr))
+  
   
   # For the alphas.
   prob_alphas <- matrix(c(omega, omega, 1, omega) / (3 * omega + 1),
                         nrow = 2, ncol = 2, byrow = TRUE)
   
-  # For the proposed values.
+  # For the proposed alpha values.
   tab_alpha_prop <- table(proposed_alphas[1, exper_change, ],
                           proposed_alphas[2, exper_change, ])
   wh_rows <- as.numeric(rownames(tab_alpha_prop)) + 1
   wh_cols <- as.numeric(colnames(tab_alpha_prop)) + 1
   AR <- AR + sum(tab_alpha_prop * log(prob_alphas)[wh_rows, wh_cols])
   
-  # For the current values.
+  # For the current alpha values.
   tab_alphas_curr <- table(current_alphas[1, exper_change, ],
                            current_alphas[2, exper_change, ])
   wh_rows <- as.numeric(rownames(tab_alphas_curr)) + 1
@@ -127,8 +152,16 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
   AR <- AR - sum(tab_alphas_curr * log(prob_alphas)[wh_rows, wh_cols])
   
   
+  # For the slopes that changed.
+  prior_sd <- sqrt(Sigma_priorY[2, 2])
+  AR <- AR +
+    sum(dnorm(proposed_coefs[2, c(wh_cut, wh_cut + 1), 2], mean = mu_priorY[2],
+              sd = prior_sd, log = TRUE)) -
+    sum(dnorm(current_coefs[2, c(wh_cut, wh_cut + 1), 2], mean = mu_priorY[2],
+              sd = prior_sd, log = TRUE))
   
-  # log proposal difference. (The proposal for the cutoffs is symmetric.)
+  
+  # Step 4c. The log proposal difference. (The cutoffs' proposal is symmetric.)
 
   # For the alphas.
   proposal_probs <- sapply(alpha_probs,
@@ -150,35 +183,20 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
   # Probability of proposing proposed from current.
   AR <- AR - sum(cross_sum * log(proposal_probs)[wh_rows, wh_cols])
   
+  
+  # For the slopes.
+  AR <- AR + log(unif_range[2] - unif_range[1])
+  AR <- AR - log(unif_range_rev[2] - unif_range_rev[1])
+  
+  
   # ------- Accepting or rejecting the move. -------- #
-  acc <- (log(runif(1)) < AR)
-  
-  if (!acc) {
-    return(r)
-  }
-  
-  # Else, we have accepted the move.
-  r$new_cutoffs <- proposed_cutoffs
-  r$new_alphas <- proposed_alphas
-  r$acc <- TRUE
-  
-  # Ensuring that the ER is continuous.
-  # Changing the slopes of the new experiments, and the intercept between them.
-  # I do not need to change the coefficients of the covariates.
-  
-  # Using the same code as in UpdateExperiments function.
-  
-  sj <- cuts[wh_cut]
-  sj1 <- cuts[wh_cut + 1]
-  sj1star <- prop_cuts[wh_cut + 1]
-  sj2 <- cuts[wh_cut + 2]
-  
-  prop_slopes <- ProposeSlopes(wh_cut = wh_cut, current_coefs = current_coefs,
-                               cuts = cuts, sj1star = sj1star, sj1 = sj1,
-                               sj = sj, sj2 = sj2)
-  proposed_coefs <- prop_slopes$proposed_coefs
 
-  r$new_coefs <- proposed_coefs
+  if (log(runif(1)) < AR) {
+    r$new_cutoffs <- proposed_cutoffs
+    r$new_alphas <- proposed_alphas
+    r$acc <- TRUE
+    r$new_coefs <- proposed_coefs
+  }
   
   return(r)
 }
