@@ -11,6 +11,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   alpha_priorY = 0.001, beta_priorY = 0.001,
                   starting_cutoffs = NULL,
                   starting_alphas = NULL,
+                  approx_likelihood = TRUE,
                   prop_distribution = c('Uniform', 'Normal'),
                   normal_percent = 1, plot_every = 0,
                   comb_probs = c(0.01, 0.5, 0.99),
@@ -19,9 +20,14 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   alpha_probs = c(0.01, 0.5, 0.99),
                   min_exper_sample = 20, tune = 0.05) {
   
+  
+  prop_distribution <- match.arg(prop_distribution)
+  if (!approx_likelihood) {
+    stop('approx_likelihood can only be set to TRUE for now.')
+  }
+  
   progress <- floor(seq(2, Nsims, length.out = 11))[- 1]
   dta <- as.data.frame(dta)
-  prop_distribution <- match.arg(prop_distribution)
   
   num_exper <- K + 1
   num_conf <- ifelse(is.null(cov_cols), 0, length(cov_cols))
@@ -124,7 +130,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
         
         jump_upd <- JumpOver(dta = dta, current_cutoffs = current_cutoffs,
                              current_coefs = current_coefs,
-                             current_alphas, approximate = TRUE,
+                             current_alphas = current_alphas,
+                             approx_likelihood = approx_likelihood,
                              cov_cols = cov_cols, omega = omega,
                              Sigma_priorY = Sigma_priorY,
                              mu_priorY = mu_priorY, comb_probs = comb_probs,
@@ -142,7 +149,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
         jump_upd <- JumpWithin(dta = dta, current_cutoffs = current_cutoffs,
                                current_alphas = current_alphas,
                                current_coefs = current_coefs,
-                               cov_cols = cov_cols, approximate = TRUE,
+                               cov_cols = cov_cols,
+                               approx_likelihood = approx_likelihood,
                                omega = omega, Sigma_priorY = Sigma_priorY,
                                mu_priorY = mu_priorY,
                                alpha_probs = alpha_probs,

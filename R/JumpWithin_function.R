@@ -13,8 +13,8 @@
 #' dimensions 2 (exposure & outcome model), experiments, and coefficients
 #' (intercept, slope, covariates).
 #' @param cov_cols The indices of the columns including the covariates.
-#' @param approximate Logical. If set to true the BIC will be used to calculate
-#' the marginal likelihood. FALSE not supported yet.
+#' @param approx_likelihood Logical. If set to true the BIC will be used to
+#' calculate the marginal likelihood. FALSE not supported yet.
 #' @param omega The omega parameter of the BAC prior.
 #' @param alpha_probs The probability that a proposed alpha is equal to 1, when
 #' 0, 1, and 2 alphas of the surrounding experiments are equal to 1. Vector of
@@ -23,17 +23,13 @@
 #' experiment. Defaults to 20.
 #' 
 JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
-                       cov_cols, approximate = TRUE, omega = 5000,
+                       cov_cols, approx_likelihood = TRUE, omega = 5000,
                        Sigma_priorY, mu_priorY,
                        alpha_probs = c(0.01, 0.5, 0.99),
                        min_exper_sample = 20) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
             new_coefs = current_coefs, acc = FALSE)
-  
-  if (!approximate) {
-    stop('approximate FALSE not supported yet.')
-  }
   
   minX <- min(dta$X)
   maxX <- max(dta$X)

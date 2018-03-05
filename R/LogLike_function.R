@@ -5,6 +5,8 @@
 LogLike <- function(D, curr_exper_alphas, curr_coefsY = NULL, X_s_cut = 0,
                     cov_cols) {
   
+  approx_jumps <- is.null(curr_coefsY)
+  
   cov_matrix <- as.matrix(D[, cov_cols])
   
   # For the exposure model.
@@ -15,7 +17,7 @@ LogLike <- function(D, curr_exper_alphas, curr_coefsY = NULL, X_s_cut = 0,
   
   # For the outcome model.
   des_mat <- matrix(cov_matrix[, curr_exper_alphas[2, ] == 1], nrow = nrow(D))
-  if (is.null(curr_coefsY)) {
+  if (approx_jumps) {
     des_mat <- cbind(1, D$X, des_mat)
     lmod <- lm(D$Y ~ des_mat)
   } else {

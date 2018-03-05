@@ -1,8 +1,8 @@
 #' @param current_coefs The current coefficients in an array format, with
 #' dimensions corresponding to the exposure/outcome model, the experiments, and
 #' the coefficient (intercept, slope, covariates).
-#' @param approximate Logical. If set to true the BIC will be used to calculate
-#' the marginal likelihood. FALSE not supported yet.
+#' @param approx_likelihood Logical. If set to true the BIC will be used to
+#' calculate the marginal likelihood. FALSE not supported yet.
 #' @param cov_cols The indices of the columns including the covariates.
 #' @param comb_probs When two experiments are combined, comb_probs represents
 #' the probability of alpha = 1 when 0, 1, and 2 corresponding alphas are equal
@@ -13,7 +13,7 @@
 #' @param min_exper_sample The minimum number of observations within an
 #' experiment.
 JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
-                     approximate = TRUE, cov_cols, omega = 5000,
+                     approx_likelihood = TRUE, cov_cols, omega = 5000,
                      mu_priorY, Sigma_priorY,
                      comb_probs = c(0.01, 0.5, 0.99), tune = 0.05,
                      split_probs = c(0.2, 0.95), min_exper_sample = 20) {
@@ -21,10 +21,6 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
             new_coefs = current_coefs, acc = FALSE,
             current_cutoffs = current_cutoffs)
-  
-  if (!approximate) {
-    stop('approximate FALSE not supported yet.')
-  }
   
   minX <- min(dta$X)
   maxX <- max(dta$X)
