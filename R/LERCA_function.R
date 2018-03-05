@@ -12,22 +12,17 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   starting_cutoffs = NULL,
                   starting_alphas = NULL,
                   prop_distribution = c('Uniform', 'Normal'),
-                  normal_percent = 1, approx_likelihood = TRUE,
-                  approx_jumps = FALSE, plot_every = 0,
+                  normal_percent = 1, plot_every = 0,
                   comb_probs = c(0.01, 0.5, 0.99),
                   split_probs = c(0.2, 0.95),
                   s_upd_probs = c(0.8, 0.1, 0.1),
                   alpha_probs = c(0.01, 0.5, 0.99),
-                  min_exper_sample = 20, jump_slope_tune = 0.05) {
-
-  prop_distribution <- match.arg(prop_distribution)
-  if (!approx_likelihood) {
-    stop('Exact likelihood option not provided yet.')
-  }
-    
+                  min_exper_sample = 20, tune = 0.05) {
+  
   progress <- floor(seq(2, Nsims, length.out = 11))[- 1]
   dta <- as.data.frame(dta)
-
+  prop_distribution <- match.arg(prop_distribution)
+  
   num_exper <- K + 1
   num_conf <- ifelse(is.null(cov_cols), 0, length(cov_cols))
   minX <- min(dta$X)
@@ -41,6 +36,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       stop('Covariates need to be centered.')
     }
   }
+  
   
   if (is.null(mu_priorX)) {
     mu_priorX <- rep(0, num_conf + 1)
@@ -128,9 +124,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
         
         jump_upd <- JumpOver(dta = dta, current_cutoffs = current_cutoffs,
                              current_coefs = current_coefs,
-                             current_alphas = current_alphas,
-                             approx_likelihood = approx_likelihood,
-                             approx_jumps = approx_jumps,
+                             current_alphas, approximate = TRUE,
                              cov_cols = cov_cols, omega = omega,
                              Sigma_priorY = Sigma_priorY,
                              mu_priorY = mu_priorY, comb_probs = comb_probs,
@@ -148,10 +142,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
         jump_upd <- JumpWithin(dta = dta, current_cutoffs = current_cutoffs,
                                current_alphas = current_alphas,
                                current_coefs = current_coefs,
-                               cov_cols = cov_cols,
-                               approx_likelihood = approx_likelihood,
-                               approx_jumps = approx_jumps, omega = omega,
-                               Sigma_priorY = Sigma_priorY,
+                               cov_cols = cov_cols, approximate = TRUE,
+                               omega = omega, Sigma_priorY = Sigma_priorY,
                                mu_priorY = mu_priorY,
                                alpha_probs = alpha_probs,
                                min_exper_sample = min_exper_sample)

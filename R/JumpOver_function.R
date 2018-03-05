@@ -1,8 +1,8 @@
 #' @param current_coefs The current coefficients in an array format, with
 #' dimensions corresponding to the exposure/outcome model, the experiments, and
 #' the coefficient (intercept, slope, covariates).
-#' @param approx_likelihood Logical. If set to true the BIC will be used to 
-#' calculate the marginal likelihood. FALSE not supported yet.
+#' @param approximate Logical. If set to true the BIC will be used to calculate
+#' the marginal likelihood. FALSE not supported yet.
 #' @param cov_cols The indices of the columns including the covariates.
 #' @param comb_probs When two experiments are combined, comb_probs represents
 #' the probability of alpha = 1 when 0, 1, and 2 corresponding alphas are equal
@@ -13,8 +13,8 @@
 #' @param min_exper_sample The minimum number of observations within an
 #' experiment.
 JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
-                     approx_likelihood = TRUE, approx_jumps = FALSE,
-                     cov_cols, omega = 5000, mu_priorY, Sigma_priorY,
+                     approximate = TRUE, cov_cols, omega = 5000,
+                     mu_priorY, Sigma_priorY,
                      comb_probs = c(0.01, 0.5, 0.99), tune = 0.05,
                      split_probs = c(0.2, 0.95), min_exper_sample = 20) {
   
@@ -22,8 +22,8 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
             new_coefs = current_coefs, acc = FALSE,
             current_cutoffs = current_cutoffs)
   
-  if (!approx_likelihood) {
-    stop('approx_likelihood FALSE not supported yet.')
+  if (!approximate) {
+    stop('approximate FALSE not supported yet.')
   }
   
   minX <- min(dta$X)
@@ -132,15 +132,13 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
     D <- subset(dta, new_exper == ee)
     AR <- AR + LogLike(D = D, curr_exper_alphas = proposed_alphas[, ee, ],
                        curr_coefsY = proposed_coefs[2, ee, 1 : 2],
-                       X_s_cut = prop_cuts[ee], cov_cols = cov_cols,
-                       approx_jumps = approx_jumps)
+                       X_s_cut = prop_cuts[ee], cov_cols = cov_cols)
   }
   for (ee in c(curr_exper_split, curr_exper_comb)) {
     D <- subset(dta, prev_exper == ee)
     AR <- AR - LogLike(D = D, curr_exper_alphas = current_alphas[, ee, ],
                        curr_coefsY = current_coefs[2, ee, 1 : 2],
-                       X_s_cut = cuts[ee], cov_cols = cov_cols,
-                       approx_jumps = approx_jumps)
+                       X_s_cut = cuts[ee], cov_cols = cov_cols)
   }
   
   
@@ -174,16 +172,15 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
   wh_cols <- as.numeric(colnames(tab_alphas_curr)) + 1
   AR <- AR - sum(tab_alphas_curr * log(prob_alphas)[wh_rows, wh_cols])
   
-  if (!approx_jumps) {
-    # For the slopes that changed.
-    prior_sd <- sqrt(Sigma_priorY[2, 2])
-    AR <- AR +
-      sum(dnorm(proposed_coefs[2, , 2], mean = mu_priorY[2],
-                sd = prior_sd, log = TRUE)) -
-      sum(dnorm(current_coefs[2, , 2], mean = mu_priorY[2],
-                sd = prior_sd, log = TRUE))
-  }
-
+  
+  # For the slopes that changed.
+  prior_sd <- sqrt(Sigma_priorY[2, 2])
+  AR <- AR +
+    sum(dnorm(proposed_coefs[2, , 2], mean = mu_priorY[2],
+              sd = prior_sd, log = TRUE)) -
+    sum(dnorm(current_coefs[2, , 2], mean = mu_priorY[2],
+              sd = prior_sd, log = TRUE))
+  
   
   
   # Step 4c. The log proposal difference.
@@ -236,21 +233,23 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
   AR <- AR - sum(t(tab_alpha_comb) * log(probs_alpha_split)[wh_rows, wh_cols])
   
   
-  if (!approx_jumps) {
-    # For the slopes.
-    AR <- AR + dnorm(slope_u_rev, mean = 0, sd = tune, log = TRUE)
-    AR <- AR - dnorm(slope_u, mean = 0, sd = tune, log = TRUE)
-  }
+  # For the slopes.
+  AR <- AR + dnorm(slope_u_rev, mean = 0, sd = tune, log = TRUE)
+  AR <- AR - dnorm(slope_u, mean = 0, sd = tune, log = TRUE)
+  
   
   # ------- Accepting or rejecting the move. -------- #
-
-  if (log(runif(1)) < AR) {
-    r$new_cutoffs <- proposed_cutoffs
-    r$new_alphas <- proposed_alphas
-    r$acc <- TRUE
-    r$new_coefs <- proposed_coefs
+  acc <- (log(runif(1)) < AR)
+  if (!acc) {
+    return(r)
   }
   
+  # Else we accepted the move.
+  
+  r$new_cutoffs <- proposed_cutoffs
+  r$new_alphas <- proposed_alphas
+  r$acc <- TRUE
+  r$new_coefs <- proposed_coefs
   return(r)
 }
 
