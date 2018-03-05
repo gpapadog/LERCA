@@ -59,69 +59,13 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   sj2 <- cuts[wh_cut + 2]
   sj1star <- proposed_cutoffs[wh_cut]
   
-  # Finding the intercept at experiment wh_cut + 2.
-  if (wh_cut < K) {
-    delta_k2 <- current_coefs[2, wh_cut + 2, 1]  # Intercept of exp K + 2.
-  } else if (wh_cut == K) {
-    add_on <- current_coefs[2, wh_cut + 1, 2] * (cuts[K + 2] - cuts[K + 1])
-    delta_k2 <- current_coefs[2, wh_cut + 1, 1] + add_on
-  }
-  
-  if (sj1star > sj1) {
+  prop_slopes <- ProposeSlopes(wh_cut = wh_cut, current_coefs = current_coefs,
+                               cuts = cuts, sj1star = sj1star, sj1 = sj1,
+                               sj = sj, sj2 = sj2)
+  proposed_coefs <- prop_slopes$proposed_coefs
+  unif_range <- prop_slopes$unif_range
+  unif_range_rev <- prop_slopes$unif_range_rev
     
-    # We will first set the slope for experiment k.
-    beta_tilde <- current_coefs[2, wh_cut, 2] * (sj1 - sj)
-    beta_tilde <- beta_tilde + current_coefs[2, wh_cut + 1, 2] * (sj1star - sj1)
-    beta_tilde <- beta_tilde / (sj1star - sj)
-    
-    unif_range <- range(c(beta_tilde, current_coefs[2, wh_cut, 2]))
-    u <- runif(1, min = unif_range[1], max = unif_range[2])
-    proposed_coefs[2, wh_cut, 2] <- u
-    
-    # The slope for experiment k + 1 is now deterministic.
-    beta_k1 <- delta_k2 - current_coefs[2, wh_cut, 1] - u * (sj1star - sj)
-    beta_k1 <- beta_k1 / (sj2 - sj1star)
-    proposed_coefs[2, wh_cut + 1, 2] <- beta_k1
-    
-    # Setting the intercept of experiment k + 1.
-    delta_k1 <- proposed_coefs[2, wh_cut, 1]  # Intercept of previous exp.
-    delta_k1 <- delta_k1 + proposed_coefs[2, wh_cut, 2] * (sj1star - sj)
-    proposed_coefs[2, wh_cut + 1, 1] <- delta_k1
-    
-    # Calculating the range of the reverse move (for proposal ratio).
-    beta_tilde_rev <- delta_k2 - proposed_coefs[2, wh_cut, 1]
-    beta_tilde_rev <- beta_tilde_rev - proposed_coefs[2, wh_cut, 2] * (sj1 - sj)
-    beta_tilde_rev <- beta_tilde_rev / (sj2 - sj1)
-    unif_range_rev <- range(c(beta_tilde_rev, current_coefs[2, wh_cut + 1, 2]))
-    
-  } else if (sj1star < sj1) {
-    
-    # We will first set to slope for experiment k + 1.
-    beta_tilde <- delta_k2 - current_coefs[2, wh_cut, 1]
-    beta_tilde <- beta_tilde - current_coefs[2, wh_cut, 2] * (sj1star - sj)
-    beta_tilde <- beta_tilde / (sj2 - sj1star)
-    
-    unif_range <- range(c(beta_tilde, current_coefs[2, wh_cut + 1, 2]))
-    u <- runif(1, min = unif_range[1], max = unif_range[2])
-    proposed_coefs[2, wh_cut + 1, 2] <- u
-    
-    beta_k <- delta_k2 - current_coefs[2, wh_cut, 1]
-    beta_k <- (beta_k - u * (sj2 - sj1star)) / (sj1star - sj)
-    proposed_coefs[2, wh_cut, 2] <- beta_k
-    
-    # Setting the intercept of experiment k + 1.
-    delta_k1 <- proposed_coefs[2, wh_cut, 1]  # Intercept of previous exp.
-    delta_k1 <- delta_k1 + proposed_coefs[2, wh_cut, 2] * (sj1star - sj)
-    proposed_coefs[2, wh_cut + 1, 1] <- delta_k1
-    
-    # Calculating the range of the reverse move (for proposal ratio).
-    beta_tilde_rev <- (proposed_coefs[2, wh_cut, 2] * (sj1star - sj) +
-                         proposed_coefs[2, wh_cut + 1, 2] * (sj1 - sj1star))
-    beta_tilde_rev <- beta_tilde_rev / (sj1 - sj)
-    unif_range_rev <- range(c(beta_tilde_rev, proposed_coefs[2, wh_cut, 2]))
-  }
-  
-  
   # ---- STEP 3: Calculating the acceptance probability. ---- #
   
   # 3A. Calculating the likelihood ratio.
