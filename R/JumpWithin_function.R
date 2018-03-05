@@ -13,8 +13,8 @@
 #' dimensions 2 (exposure & outcome model), experiments, and coefficients
 #' (intercept, slope, covariates).
 #' @param cov_cols The indices of the columns including the covariates.
-#' @param approximate Logical. If set to true the BIC will be used to calculate
-#' the marginal likelihood. FALSE not supported yet.
+#' @param approx_likelihood Logical. If set to true the BIC will be used to
+#' calculate the marginal likelihood. FALSE not supported yet.
 #' @param omega The omega parameter of the BAC prior.
 #' @param alpha_probs The probability that a proposed alpha is equal to 1, when
 #' 0, 1, and 2 alphas of the surrounding experiments are equal to 1. Vector of
@@ -23,16 +23,16 @@
 #' experiment. Defaults to 20.
 #' 
 JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
-                       cov_cols, approximate = TRUE, omega = 5000,
-                       Sigma_priorY, mu_priorY,
-                       alpha_probs = c(0.01, 0.5, 0.99),
+                       cov_cols, approx_likelihood = TRUE,
+                       approx_jumps = FALSE, omega = 5000, Sigma_priorY,
+                       mu_priorY, alpha_probs = c(0.01, 0.5, 0.99),
                        min_exper_sample = 20) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
             new_coefs = current_coefs, acc = FALSE)
   
-  if (!approximate) {
-    stop('approximate FALSE not supported yet.')
+  if (!approx_likelihood) {
+    stop('approx_likelihood FALSE not supported yet.')
   }
   
   minX <- min(dta$X)
@@ -114,13 +114,15 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
     D <- subset(dta, new_exper == ee)
     AR <- AR + LogLike(D = D, curr_exper_alphas = proposed_alphas[, ee, ],
                        curr_coefsY = proposed_coefs[2, ee, 1 : 2],
-                       X_s_cut = exact_prop_cuts[ee], cov_cols = cov_cols)
+                       X_s_cut = exact_prop_cuts[ee], cov_cols = cov_cols,
+                       approx_jumps = approx_jumps)
   }
   for (ee in exper_change) {
     D <- subset(dta, prev_exper == ee)
     AR <- AR - LogLike(D = D, curr_exper_alphas = current_alphas[, ee, ],
                        curr_coefsY = current_coefs[2, ee, 1 : 2],
-                       X_s_cut = exact_cuts[ee], cov_cols = cov_cols)
+                       X_s_cut = exact_cuts[ee], cov_cols = cov_cols,
+                       approx_jumps = approx_jumps)
   }
   
   
@@ -154,13 +156,15 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
   
   
   # For the slopes that changed.
-  prior_sd <- sqrt(Sigma_priorY[2, 2])
-  AR <- AR +
-    sum(dnorm(proposed_coefs[2, c(wh_cut, wh_cut + 1), 2], mean = mu_priorY[2],
-              sd = prior_sd, log = TRUE)) -
-    sum(dnorm(current_coefs[2, c(wh_cut, wh_cut + 1), 2], mean = mu_priorY[2],
-              sd = prior_sd, log = TRUE))
-  
+  if (!approx_jumps) {
+    prior_sd <- sqrt(Sigma_priorY[2, 2])
+    AR <- AR +
+      sum(dnorm(proposed_coefs[2, c(wh_cut, wh_cut + 1), 2], mean = mu_priorY[2],
+                sd = prior_sd, log = TRUE)) -
+      sum(dnorm(current_coefs[2, c(wh_cut, wh_cut + 1), 2], mean = mu_priorY[2],
+                sd = prior_sd, log = TRUE))
+  }
+
   
   # Step 4c. The log proposal difference. (The cutoffs' proposal is symmetric.)
 
@@ -186,9 +190,11 @@ JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
   
   
   # For the slopes.
-  AR <- AR + log(unif_range[2] - unif_range[1])
-  AR <- AR - log(unif_range_rev[2] - unif_range_rev[1])
-  
+  if (!approx_jumps) {
+    AR <- AR + log(unif_range[2] - unif_range[1])
+    AR <- AR - log(unif_range_rev[2] - unif_range_rev[1])
+  }
+
   
   # ------- Accepting or rejecting the move. -------- #
 
