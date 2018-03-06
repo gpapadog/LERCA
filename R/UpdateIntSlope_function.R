@@ -1,5 +1,31 @@
+#' Intercepts and coefficients of exposure
+#' 
+#' Updating the outcome model intercepts and coefficients for the exposure.
+#' 
+#' @param dta A data set including a column of the exposure of interest as X,
+#' the outcome of interest as Y, and all potential confounders as C1, C2, ...
+#' @param cov_cols The indices of the columns in dta corresponding to the
+#' potential confounders.
+#' @param current_cutoffs Numeric of length K. The current values for the
+#' points in the experiment configuraiton.
+#' @param current_coefs The current coefficients of the MCMC. Three dimensional
+#' array with dimensions corresponding to exposure/outcome model, experiment,
+#' and coefficients (intercept, slope, covariates).
+#' @param current_vars Matrix. Rows correspond to exposure/outcome model, and
+#' columns to experiments. Entries are the current variances.
+#' @param mu_priorY The mean of the normal prior on the coefficients of the
+#' outcome model. Numeric vector with entries corresponding to intercept, slope
+#' of exposure, and potential covariates.  If left NULL, it is set to 0 for all
+#' parameters.
+#' @param Sigma_priorY The covariance matrix of the normal prior on the
+#' regression coefficients of the outcome model. If left NULL, it is set to
+#' diagonal with entries 100 ^ 2 for all parameters.
+#' 
+#' @return A matrix with dimensions that correspond to the exposure/outcome
+#' model, and the intercept/slope coefficient.
+#'
 UpdateIntSlope <- function(dta, cov_cols, current_cutoffs, current_coefs,
-                           current_vars, Sigma_priorY, mu_priorY) {
+                           current_vars, mu_priorY, Sigma_priorY) {
   
   num_conf <- ifelse(is.null(cov_cols), 0, length(cov_cols))
   K <- length(current_cutoffs)

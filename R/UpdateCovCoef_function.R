@@ -1,6 +1,42 @@
+#' Update within experiment coefficients
+#' 
+#' Updating the coefficients that use the within experiment likelihood:
+#' intercept and coefficients of the exposure model, and the coefficients of
+#' the covariates in the outcome model.
+#' 
+#' @param dta A data set including a column of the exposure of interest as X,
+#' the outcome of interest as Y, and all potential confounders as C1, C2, ...
+#' @param cov_cols The indices of the columns in dta corresponding to the
+#' potential confounders.
+#' @param current_cutoffs Numeric of length K. The current values for the
+#' points in the experiment configuraiton.
+#' @param current_coefs The current coefficients of the MCMC. Three dimensional
+#' array with dimensions corresponding to exposure/outcome model, experiment,
+#' and coefficients (intercept, slope, covariates).
+#' @param current_alphas Array of dimensions that correspond to the exposure or
+#' outcome model, the experiment, and potential confounding. Entries are 0/1
+#' corresponding to exclusion/inclusion of the covaraite in the corresponding
+#' model of the experiment.
+#' @param current_vars Matrix. Rows correspond to exposure/outcome model, and
+#' columns to experiments. Entries are the current variances.
+#' @param mu_priorX The mean of the normal prior on the coefficients of the
+#' exposure model. Numeric vector of length equal to the number of potential
+#' confounders + 1 with the first entry corresponding to the intercept.
+#' @param Sigma_priorX Covariance matrix of the normal prior on the regression
+#' coefficients of the exposure model.
+#' @param mu_priorY The mean of the normal prior on the coefficients of the
+#' outcome model. Numeric vector with entries corresponding to intercept, slope
+#' of exposure, and potential covariates.
+#' @param Sigma_priorY The covariance matrix of the normal prior on the
+#' regression coefficients of the outcome model.
+#' 
+#' @return Array of dimensions that correspond to the exposure/outcome model,
+#' experiment, and coefficients (intercept, covariates). The intercepts of the
+#' outcome model are NA, since they are not updated with this function.
+#' 
 UpdateCovCoef <- function(dta, cov_cols, current_cutoffs, current_coefs,
-                          current_alphas, current_vars, Sigma_priorX,
-                          mu_priorX, Sigma_priorY, mu_priorY) {
+                          current_alphas, current_vars, mu_priorX,
+                          Sigma_priorX, mu_priorY, Sigma_priorY) {
   
   num_conf <- ifelse(is.null(cov_cols), 0, length(cov_cols))
   K <- length(current_cutoffs)
