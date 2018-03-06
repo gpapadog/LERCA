@@ -50,8 +50,6 @@ UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
   
   # ---- STEP 2: Proposing slope values for adjacent experiments. ---- #
   
-  proposed_coefs <- current_coefs
-  
   # Change the slopes of experiments k, k + 1, and intercept of k + 1.
   
   sj <- cuts[wh_cut]
