@@ -1,6 +1,7 @@
-#' CER from MCMC of multiple chains.
+#' CER estimates from LERCA fit.
 #' 
-#' When multiple chains are ran, we use GetER to get the posterior CER samples.
+#' Use this function to acquire the ER estimates from a LERCA fit for a set of
+#' exposure values.
 #' 
 #' @param dta The dataset including columns X (treatment), Y (outcome), and
 #' potential confounders named as C1, C2, ...

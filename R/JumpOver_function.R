@@ -1,9 +1,28 @@
+#' MCMC jump over move
+#' 
+#' Simultaneous update of the experiment configuration, inclusion indicators,
+#' and slopes that reorder to points in the experiment configuration.
+#' 
+#' @param dta Data frame including the covariates as C1, C2, ..., the exposure
+#' as X and the outcome as Y.
+#' @param current_cutoffs Numeric of length K. The current values for the
+#' points in the experiment configuraiton.
+#' @param current_alphas Array of dimensions that correspond to the exposure or
+#' outcome model, the experiment, and potential confounding. Entries are 0/1
+#' corresponding to exclusion/inclusion of the covaraite in the corresponding
+#' model of the experiment.
 #' @param current_coefs The current coefficients in an array format, with
 #' dimensions corresponding to the exposure/outcome model, the experiments, and
 #' the coefficient (intercept, slope, covariates).
 #' @param approx_likelihood Logical. If set to true the BIC will be used to
 #' calculate the marginal likelihood. FALSE not supported yet.
 #' @param cov_cols The indices of the columns including the covariates.
+#' @param omega The parameter of the BAC prior on inclusion indicators.
+#' @param mu_priorY Vector of length equal to the number of covariates + 2 with
+#' entries corresponding to the prior mean of the intercept, slope, coefficient
+#' in the outcome model.
+#' @param Sigma_priorY The normal prior covariance matrix of the parameters in
+#' mu_priorY.
 #' @param comb_probs When two experiments are combined, comb_probs represents
 #' the probability of alpha = 1 when 0, 1, and 2 corresponding alphas are equal
 #' to 1. Vector of length 3.
@@ -11,12 +30,14 @@
 #' probability that the alpha of a new experiment is equal to 1, when the alpha
 #' of the current experiment is 0, and when it is 1. Vector of length 2.
 #' @param min_exper_sample The minimum number of observations within an
-#' experiment.
+#' experiment. Defaults to 20.
+#' @param jump_slope_tune The standard deviation of the proposal on the slopes.
+#' 
 JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
                      approx_likelihood = TRUE, cov_cols, omega = 5000,
-                     mu_priorY, Sigma_priorY,
-                     comb_probs = c(0.01, 0.5, 0.99), tune = 0.05,
-                     split_probs = c(0.2, 0.95), min_exper_sample = 20) {
+                     mu_priorY, Sigma_priorY, comb_probs = c(0.01, 0.5, 0.99),
+                     split_probs = c(0.2, 0.95), min_exper_sample = 20,
+                     jump_slope_tune = 0.05) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
             new_coefs = current_coefs, acc = FALSE,
@@ -105,13 +126,13 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
   
   coef_prop <- JumpOverCoef(current_coefs = current_coefs,
                             prop_cuts = prop_cuts, cuts = cuts,
-                            prop_exper_same = prop_exper_same,
                             curr_exper_same = curr_exper_same,
+                            prop_exper_same = prop_exper_same,
                             curr_exper_comb = curr_exper_comb,
                             prop_exper_comb = prop_exper_comb,
                             curr_exper_split = curr_exper_split,
                             prop_exper_split = prop_exper_split,
-                            tune = tune)
+                            jump_slope_tune = jump_slope_tune)
   proposed_coefs <- coef_prop$proposed_coefs
   slope_u <- coef_prop$u
   slope_u_rev <- coef_prop$u_rev
@@ -230,8 +251,8 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
   
   
   # For the slopes.
-  AR <- AR + dnorm(slope_u_rev, mean = 0, sd = tune, log = TRUE)
-  AR <- AR - dnorm(slope_u, mean = 0, sd = tune, log = TRUE)
+  AR <- AR + dnorm(slope_u_rev, mean = 0, sd = jump_slope_tune, log = TRUE)
+  AR <- AR - dnorm(slope_u, mean = 0, sd = jump_slope_tune, log = TRUE)
   
   
   # ------- Accepting or rejecting the move. -------- #

@@ -1,7 +1,4 @@
-#' Calculate the CER
-#' 
-#' Calculate the average ER function from posterior cutoff and coefficient values from
-#' one MCMC chain.
+#' Calculating the exposure response function for one MCMC chain.
 #' 
 #' Function that takes the posterior samples of cutoffs, inclusion indicators and
 #' coefficients of the outcome model and returns the posterior mean response for

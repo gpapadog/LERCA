@@ -1,6 +1,37 @@
-JumpOverCoef <- function(current_coefs, prop_cuts, cuts, prop_exper_same,
-                         curr_exper_same, curr_exper_comb, prop_exper_comb,
-                         curr_exper_split, prop_exper_split, tune) {
+#' Proposing coefficients for the Jump Pver MCMC move.
+#' 
+#' The Jump Over move is accompanied with proposing new slopes that ensure a
+#' continuous ER.
+#' 
+#' @param current_coefs The current coefficients of the MCMC. Three dimensional
+#' array with dimensions corresponding to exposure/outcome model, experiment,
+#' and coefficients (intercept, slope, covariates).
+#' @param prop_cuts Numeric vector with the K locations of the proposed
+#' experiment configuration.
+#' @param cuts Numeric vector with the K locations of the current experiment
+#' configuration.
+#' @param curr_exper_same Numeric vector. Indices of experiments in the current
+#' experiment configuration that did not get combined or split. They should be
+#' in the same order as prop_exper_same.
+#' @param prop_exper_same Numeric vector with the indices of the experiments
+#' in the proposed experiment configuration that did not get combined or split.
+#' @param curr_exper_comb Numeric vector of length two with entries the indices
+#' of the experiments with respect to the current experiment configuration that
+#' were proposed to be combined.
+#' @param prop_exper_comb Numeric. Index of the experiment in the proposed
+#' experiment configuration corresponding to the combined experiment.
+#' @param curr_exper_split Numeric. Index of the experiment in the current
+#' experiment configuration that is proposed to be split.
+#' @param prop_exper_split Numeric vector of length two. Indices of the
+#' experiments in the proposed experiment configuration that are the result of
+#' a split in an experiment.
+#' @param jump_slope_tune Numeric. The standard deviation of the proposal on
+#' slopes for the two experiments in the proposed experiment configuration that
+#' are the result of an experiment's split.
+#' 
+JumpOverCoef <- function(current_coefs, prop_cuts, cuts, curr_exper_same,
+                         prop_exper_same, curr_exper_comb, prop_exper_comb,
+                         curr_exper_split, prop_exper_split, jump_slope_tune) {
   
   # We need to set new coefficients.
   proposed_coefs <- current_coefs
@@ -44,7 +75,7 @@ JumpOverCoef <- function(current_coefs, prop_cuts, cuts, prop_exper_same,
   proposed_coefs[2, set_exper, 2] <- slope_set
   
   # Slope of the first experiment that was split.
-  u <- rnorm(1, mean = 0, sd = tune)
+  u <- rnorm(1, mean = 0, sd = jump_slope_tune)
   slope_split <- current_coefs[2, curr_exper_split, 2] + u
   proposed_coefs[2, prop_exper_split[1], 2] <- slope_split
   

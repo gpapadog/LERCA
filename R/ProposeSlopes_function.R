@@ -1,3 +1,21 @@
+#' Proposed slope values of Jump Over move.
+#' 
+#' Propose values for the slopes of all experiments in the Jump Over move
+#' ensuring continous ER and unchanged likelihood in experiments that are not
+#' affected.
+#' 
+#' @param wh_cut Integer. Which one of the K points in the experiment
+#' configuration was selected to be moved.
+#' @param current_coefs The current coefficients in an array format, with
+#' dimensions corresponding to the exposure/outcome model, the experiments, and
+#' the coefficient (intercept, slope, covariates).
+#' @param cuts The points in the experiment configuration includin the minimum
+#' and maximum values.
+#' @param sj1star The proposed point in the experiment configuration.
+#' @param sj1 The current point that is proposed to be moved.
+#' @param sj The point in the current experiment configuration before sj1.
+#' @param sj2 The point in the current experiment configuration after sj1.
+#' 
 ProposeSlopes <- function(wh_cut, current_coefs, cuts, sj1star, sj1, sj, sj2) {
   
   proposed_coefs <- current_coefs

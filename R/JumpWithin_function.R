@@ -1,10 +1,13 @@
 #' Simultaneous move of experiment, alphas and slopes within experiment.
 #' 
-#' Proposing a simultaneous move of the experiment configuration and inclusion
-#' indicators maintaining the order of the experiment configuration. New values
-#' for the slopes are proposed ensuring continuous ER. We use the likelihood
-#' integrating out the coefficients of the covariates and variance terms.
+#' Proposing a simultaneous move of the experiment configuration, inclusion
+#' indicators and slopes of the exposure in the outcome model while maintaining
+#' the order of the experiment configuration. New values for the slopes are
+#' proposed ensuring continuous ER. We use the likelihood integrating out the
+#' coefficients of the covariates and variance terms.
 #' 
+#' @param dta Data frame including the covariates as C1, C2, ..., the exposure
+#' as X and the outcome as Y.
 #' @param current_cutoffs The current values of the experiment configuration.
 #' Vector of length K.
 #' @param current_alphas The current values of the inclusion indicators. Array
@@ -16,6 +19,11 @@
 #' @param approx_likelihood Logical. If set to true the BIC will be used to
 #' calculate the marginal likelihood. FALSE not supported yet.
 #' @param omega The omega parameter of the BAC prior.
+#' @param mu_priorY Vector of length equal to the number of covariates + 2 with
+#' entries corresponding to the prior mean of the intercept, slope, coefficient
+#' in the outcome model.
+#' @param Sigma_priorY The normal prior covariance matrix of the parameters in
+#' mu_priorY.
 #' @param alpha_probs The probability that a proposed alpha is equal to 1, when
 #' 0, 1, and 2 alphas of the surrounding experiments are equal to 1. Vector of
 #' length 3. Defaults to (0.01, 0.5, 0.99).
@@ -24,7 +32,7 @@
 #' 
 JumpWithin <- function(dta, current_cutoffs, current_alphas, current_coefs,
                        cov_cols, approx_likelihood = TRUE, omega = 5000,
-                       Sigma_priorY, mu_priorY,
+                       mu_priorY, Sigma_priorY,
                        alpha_probs = c(0.01, 0.5, 0.99),
                        min_exper_sample = 20) {
   

@@ -1,8 +1,21 @@
 #' Approximate log likelihood of an experiment.
 #' 
-#' Calculating the log likelihood based on the BIC approximation. We use X
-#' instead of X - s in the outcome model since it provides the same BIC value.
-LogLike <- function(D, curr_exper_alphas, curr_coefsY = NULL, X_s_cut = 0,
+#' Calculating the log likelihood based on the BIC approximation.
+#' 
+#' @param D The data set of the current experiment includes covariates,
+#' exposure as 'X' and outcome as 'Y'.
+#' @param curr_exper_alphas Matrix. Dimensions correspond to exposure/outcome
+#' model and potential confounders. Entries 0/1 represent exlusion/inclusion of
+#' the covariate in each model.
+#' @param curr_coefsY Numeric of length two. Intercept and slope of the outcome
+#' model. If left NULL, the likelihood is calculated integrating out intercept
+#' and slope along with remaining coefficients.
+#' @param X_s_cut Numeric. The point in the experiment configuration that
+#' corresponds to the beginning of the current experiment.
+#' @param cov_cols The indices of the columns in D that correspond to the
+#' potential confounders.
+#' 
+LogLike <- function(D, curr_exper_alphas, curr_coefsY = NULL, X_s_cut,
                     cov_cols) {
   
   approx_jumps <- is.null(curr_coefsY)

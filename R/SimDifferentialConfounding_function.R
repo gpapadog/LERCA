@@ -1,8 +1,7 @@
 #' Simulating data with differential confounding.
 #' 
-#' Funcition that generates data where different variables are confounders of
-#' the exposure-response relationship based on the exposure range we are
-#' looking at.
+#' Generate data with different variables are confounders of the exposure-
+#' response relationship at different exposure levels.
 #' 
 #' @param N Sample size.
 #' @param num_exper Number of experiments.
@@ -44,6 +43,8 @@
 #' arguement (set 'other').
 #' @param XY_spec Needs to be specified if XY_function is set to 'other'. It is
 #' the function that specifies the true ER relationship. Defaults to NULL.
+#' @param center_covs Logical. Whether the potential confounders should be
+#' centered before generating the outcome. Defaults to TRUE.
 #' 
 #' @export
 #' @examples
