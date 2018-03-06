@@ -1,5 +1,28 @@
-MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
-                       starting_cutoffs, starting_alphas) {
+#' Create arrays to save MCMC posterior samples
+#' 
+#' @param X Numeric vector. Observed exposure values. Can be left NULL if
+#' min_exper_sample is set to 0.
+#' @param chains The number of separate MCMC chains.
+#' @param Nsims The number of posterior samples per chain.
+#' @param num_exper The number of experiments we are allowing.
+#' @param num_conf The number of potential confounders.
+#' @param omega The omega of the BAC prior on inclusion indicators.
+#' @param minX The minimum observed exposure value.
+#' @param maxX The maximum observed exposure value.
+#' @param starting cutoffs Matrix with rows corresponding to different chains.
+#' Each row includes K ordered values of MCMC starting cutoffs. If left NULL,
+#' random started values are used.
+#' @param starting_alphas Array with dimensions corresponding to the model
+#' (exposure / outcome), the experiment, and the potential confounders. Entries
+#' 0/1 represent exclusion/inclusion of the covariate in the corresponding
+#' model.
+#' @param min_exper_sample The minimum number of observations within an
+#' experiment. It will be used to ensure that starting cutoffs are allowed
+#' under the prior specification.
+#' 
+MakeArrays <- function(X = NULL, chains, Nsims, num_exper, num_conf, omega,
+                       minX, maxX, starting_cutoffs, starting_alphas,
+                       min_exper_sample = 0) {
   
   # Alphas. Starting values are from the prior.
   
@@ -54,9 +77,27 @@ MakeArrays <- function(chains, Nsims, num_exper, num_conf, omega, minX, maxX,
   
   if (is.null(starting_cutoffs)) {
     starting_cutoffs <- matrix(NA, nrow = chains, ncol = K)
+    
     for (cc in 1 : chains) {
-      x <- sort(runif(2 * (K + 1), minX, maxX))
-      starting_cutoffs[cc, ] <- x[seq(2, 2 * K, by = 2)]
+      
+      # Ensuring that the starting cutoffs are allowed by the prior.
+      sample_new <- TRUE
+      while (sample_new) {
+        # Get the even ordered statistics from uniform sample.
+        x <- sort(runif(2 * (K + 1), minX, maxX))
+        start_cuts <- x[seq(2, 2 * K, by = 2)]
+        # If we have no constraint on the minimum sample size, accept.
+        if (min_exper_sample == 0) {
+          sample_new <- FALSE
+        } else {  # Check that minimum sample size is satisfied.
+          cuts_x <- c(minX - 0.001, start_cuts, maxX + 0.001)
+          expers <- table(sapply(X, function(x) sum(x < cuts_x)))
+          if (length(expers) == K + 1 & all(expers >= min_exper_sample)) {
+            sample_new <- FALSE
+          }
+        }
+      }
+      starting_cutoffs[cc, ] <- start_cuts
     }
   }
   cutoffs[, 1, ] <- starting_cutoffs[1 : chains, ]
