@@ -19,6 +19,7 @@
 ProposeSlopes <- function(wh_cut, current_coefs, cuts, sj1star, sj1, sj, sj2) {
   
   proposed_coefs <- current_coefs
+  K <- length(cuts) - 2
   
   # Finding the intercept at experiment wh_cut + 2.
   if (wh_cut < K) {

@@ -33,6 +33,8 @@ JumpOverCoef <- function(current_coefs, prop_cuts, cuts, curr_exper_same,
                          prop_exper_same, curr_exper_comb, prop_exper_comb,
                          curr_exper_split, prop_exper_split, jump_slope_tune) {
   
+  K <- dim(current_coefs)[2] - 1
+  
   # We need to set new coefficients.
   proposed_coefs <- current_coefs
   proposed_coefs[2, , 1 : 2] <- NA
