@@ -98,7 +98,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
   dta <- as.data.frame(dta)
   
   num_exper <- K + 1
-  num_conf <- length(cov_cols)
+  num_conf <- ifelse(is.null(cov_cols), 0, length(cov_cols))
   minX <- min(dta$X)
   maxX <- max(dta$X)
   
@@ -116,6 +116,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
     mu_priorX <- rep(0, num_conf + 1)
   }
   if (is.null(mu_priorY)) {
+    # For a continuous ER, the intercepts of experiments higher than 1 are not
+    # random, and the corresponding prior on mu_priorY is ignored.
     mu_priorY <- rep(0, num_conf + 2)
   }
   if (is.null(Sigma_priorX)) {
@@ -257,21 +259,12 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       coefs[2, cc, ii, , - c(1, 2)] <- coef_upd[2, , - 1]
       current_coefs <- coefs[, cc, ii, , ]
       
-      coef_upd <- UpdateCoefficients(dta = dta, cov_cols = cov_cols,
-                                     current_cutoffs = current_cutoffs,
-                                     current_alphas = current_alphas,
-                                     current_vars = current_vars,
-                                     Sigma_priorX = Sigma_priorX,
-                                     mu_priorX = mu_priorX,
-                                     Sigma_priorY = Sigma_priorY,
-                                     mu_priorY = mu_priorY)
-      coefs[, cc, ii, , ] <- coef_upd
       
       # ------ Updating the variances.
       
-      current_coefs <- coefs[, cc, ii, , ]
       var_upd <- UpdateVariances(dta = dta, current_cutoffs = current_cutoffs,
                                  current_coefs = current_coefs,
+                                 cov_cols = cov_cols,
                                  alpha_priorX = alpha_priorX,
                                  beta_priorX = beta_priorX,
                                  alpha_priorY = alpha_priorY,

@@ -48,6 +48,7 @@ MakeArrays <- function(X = NULL, chains, Nsims, num_exper, num_conf, omega,
         }
       }
     }
+    alphas[, , 1, , ] <- starting_alphas
   }
   
   # Coefficient and variance values.
@@ -57,21 +58,15 @@ MakeArrays <- function(X = NULL, chains, Nsims, num_exper, num_conf, omega,
                               chain = 1 : chains, sample = 1 : Nsims,
                               exper = 1 : num_exper)
   
+  cov_names <- c('Int', 'X')
+  if (num_conf > 0) {
+    cov_names <- c(cov_names, paste0('C', 1 : num_conf))
+  }
   coefs <- array(0, dim = c(2, chains, Nsims, num_exper, num_conf + 2))
   dimnames(coefs) <- list(model = c('Exposure', 'Outcome'),
                           chain = 1 : chains, sample = 1 : Nsims,
-                          exper = 1 : num_exper,
-                          covar = c('Int', 'X', 1 : num_conf))
-  
-  # Starting values for coefficients and variances.
-  for (cc in 1 : chains) {
-    for (ee in 1 : (K + 1)) {
-      coefs[1, cc, 1, ee, - 2] <- rnorm(num_conf + 1, mean = 0, sd = 10)
-      coefs[2, cc, 1, ee, ] <- rnorm(num_conf + 2, mean = 0, sd = 10)
-    }
-    variances[1, cc, 1, ] <- invgamma::rinvgamma(num_exper, 10, 20)
-    variances[2, cc, 1, ] <- invgamma::rinvgamma(num_exper, 10, 20)
-  }
+                          exper = 1 : num_exper, covar = cov_names)
+  coefs[1, , , , 2] <- NA  # No exposure coefficient for exposure model.
   
   
   # Experiment configuration with starting values from the prior if NULL.
