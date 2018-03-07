@@ -303,6 +303,7 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
 }
 
 
+
 # predict_at <- seq(min(dta$X), max(dta$X), length.out = 100)
 # y_predict <- rep(NA, length(predict_at))
 # for (xx in 1 : 100) {
