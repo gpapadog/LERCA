@@ -1,3 +1,37 @@
+#' Separate move of the experiment configuration
+#' 
+#' Updating the experiment configuration separately from the inclusion
+#' indicators.
+#' 
+#' @param dta Data frame including the covariates as C1, C2, ..., the exposure
+#' as X and the outcome as Y.
+#' @param cov_cols The indices of the columns including the covariates.
+#' @param current_cutoffs Numeric of length K. The current values for the
+#' points in the experiment configuraiton.
+#' @param current_coefs The current coefficients in an array format, with
+#' dimensions corresponding to the exposure/outcome model, the experiments, and
+#' the coefficient (intercept, slope, covariates).
+#' @param current_vars Matrix. Rows correspond to exposure/outcome model, and
+#' columns to experiments. Entries are the current variances.
+#' @param min_exper_sample The minimum number of observations within an
+#' experiment. Defaults to 20.
+#' @param prop_distribution Character vector. Options include 'Uniform' or
+#' 'Normal' representing the type of distribution that will be used to propose
+#' a move of the cutoffs in the separate update. Defaults to uniform.
+#' @param normal_percent Numeric. Parameter controling the width of a normal
+#' proposal for the experiment configuration. Used only when prop_distribution
+#' is set to Normal. Smaller values represent smaller variance of the truncated
+#' normal proposal distribution. Defaults to 1.
+#' @param mu_priorY Vector of length equal to the number of covariates + 2 with
+#' entries corresponding to the prior mean of the intercept, slope, coefficient
+#' in the outcome model.
+#' @param Sigma_priorY The normal prior covariance matrix of the parameters in
+#' mu_priorY.
+#' 
+#' @return List. Entries are the new, current and proposed experiment
+#' configuration, the new coefficients and the indicator of acceptance of the
+#' proposed move.
+#' 
 UpdateExperiments <- function(dta, cov_cols, current_cutoffs, current_coefs,
                               current_vars, min_exper_sample = 20,
                               prop_distribution = c('Uniform', 'Normal'),
