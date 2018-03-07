@@ -5,10 +5,6 @@
 #' @param dta The full data set including the confounders as C1, C2, ..., the
 #' outcome as Y and the exposure as X.
 #' 
-#' @return Numeric vector with entries: the estimated log predictive density,
-#' the penalty term based on both criteria, and the WAIC based on both penalty
-#' criteria.
-#' 
 #' @export
 WAIC <- function(lerca, dta) {
   

@@ -1,14 +1,3 @@
-#' Calculating the PSR of the LERCA fit.
-#' 
-#' Based on the posterior samples of the mean ER estimates, calculate the
-#' potential scale reduction factor to assess MCMC convergence.
-#' 
-#' @param samples Matrix. Rows and columns correspond to iterations and chains
-#' accordingly.
-#' 
-#' @return Numeric. Estimate of the potential scale reduction factor. Values
-#' close to 1 indicate MCMC convergence.
-#' 
 #' @export
 psr <- function(samples) {
   R <- nrow(samples)

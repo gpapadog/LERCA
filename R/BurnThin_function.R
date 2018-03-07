@@ -5,10 +5,6 @@
 #' @param thin The distance of iterations we want to keep.
 #' 
 #' @export
-#' 
-#' @example
-#' lerca_short <- BurnThin(lerca = lerca, burn = 1000, thin = 10)
-#' 
 BurnThin <- function(lerca, burn, thin) {
   
   if (burn == 0 & thin == 1) {
