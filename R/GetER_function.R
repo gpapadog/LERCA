@@ -1,6 +1,7 @@
-#' CER from MCMC of multiple chains.
+#' CER estimates from LERCA fit.
 #' 
-#' When multiple chains are ran, we use GetER to get the posterior CER samples.
+#' Use this function to acquire the ER estimates from a LERCA fit for a set of
+#' exposure values.
 #' 
 #' @param dta The dataset including columns X (treatment), Y (outcome), and
 #' potential confounders named as C1, C2, ...
@@ -23,6 +24,7 @@
 GetER <- function(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
                   mean_only = FALSE, other_function = NULL) {
   
+  dta <- as.data.frame(dta)
   minX <- min(dta$X)
   maxX <- max(dta$X)
   

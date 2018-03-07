@@ -1,8 +1,7 @@
 #' Simulating data with differential confounding.
 #' 
-#' Funcition that generates data where different variables are confounders of
-#' the exposure-response relationship based on the exposure range we are
-#' looking at.
+#' Generate data with different variables are confounders of the exposure-
+#' response relationship at different exposure levels.
 #' 
 #' @param N Sample size.
 #' @param num_exper Number of experiments.
@@ -44,6 +43,8 @@
 #' arguement (set 'other').
 #' @param XY_spec Needs to be specified if XY_function is set to 'other'. It is
 #' the function that specifies the true ER relationship. Defaults to NULL.
+#' @param center_covs Logical. Whether the potential confounders should be
+#' centered before generating the outcome. Defaults to TRUE.
 #' 
 #' @export
 #' @examples
@@ -67,7 +68,7 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
                                        out_coef, interYexp1 = 0, bYX, Ysd = 1,
                                        overall_meanC = c('true', 'observed'),
                                        XY_function = c('linear', 'other'),
-                                       XY_spec = NULL) {
+                                       XY_spec = NULL, center_covs = TRUE) {
   
   overall_meanC <- match.arg(overall_meanC)
   XY_function <- match.arg(XY_function)
@@ -125,7 +126,13 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
   
   if (!is.null(num_conf)) {  # If we have potential confounders.
     meanC <- XCcontinuous(meanCexp1, XCcov, eff_exper_change, meanX, varX)
-    
+    # Centering the covariates.
+    if (center_covs) {
+      for (cc in 1 : num_conf) {
+        meanC[cc, ] <- meanC[cc, ] - weighted.mean(meanC[cc, ], w = meanC_weights)
+      }
+    }
+
     Cfull <- NULL
     data.table::setkey(dta, E)
     
@@ -144,6 +151,9 @@ SimDifferentialConfounding <- function(N, num_exper, XCcorr, varC, Xrange,
         C[ii, ] <- mvnfast::rmvn(1, mu = mu_bar[, ii], sigma = sigma_bar)
       }
       Cfull <- rbind(Cfull, C)
+    }
+    if (center_covs) {
+      Cfull <- scale(Cfull, center = TRUE, scale = FALSE)
     }
   }
   

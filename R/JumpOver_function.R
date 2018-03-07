@@ -1,6 +1,28 @@
-#' @param approximate Logical. If set to true the BIC will be used to calculate
-#' the marginal likelihood. FALSE not supported yet.
+#' MCMC jump over move
+#' 
+#' Simultaneous update of the experiment configuration, inclusion indicators,
+#' and slopes that reorder to points in the experiment configuration.
+#' 
+#' @param dta Data frame including the covariates as C1, C2, ..., the exposure
+#' as X and the outcome as Y.
+#' @param current_cutoffs Numeric of length K. The current values for the
+#' points in the experiment configuraiton.
+#' @param current_alphas Array of dimensions that correspond to the exposure or
+#' outcome model, the experiment, and potential confounding. Entries are 0/1
+#' corresponding to exclusion/inclusion of the covaraite in the corresponding
+#' model of the experiment.
+#' @param current_coefs The current coefficients in an array format, with
+#' dimensions corresponding to the exposure/outcome model, the experiments, and
+#' the coefficient (intercept, slope, covariates).
+#' @param approx_likelihood Logical. If set to true the BIC will be used to
+#' calculate the marginal likelihood. FALSE not supported yet.
 #' @param cov_cols The indices of the columns including the covariates.
+#' @param omega The parameter of the BAC prior on inclusion indicators.
+#' @param mu_priorY Vector of length equal to the number of covariates + 2 with
+#' entries corresponding to the prior mean of the intercept, slope, coefficient
+#' in the outcome model.
+#' @param Sigma_priorY The normal prior covariance matrix of the parameters in
+#' mu_priorY.
 #' @param comb_probs When two experiments are combined, comb_probs represents
 #' the probability of alpha = 1 when 0, 1, and 2 corresponding alphas are equal
 #' to 1. Vector of length 3.
@@ -8,23 +30,25 @@
 #' probability that the alpha of a new experiment is equal to 1, when the alpha
 #' of the current experiment is 0, and when it is 1. Vector of length 2.
 #' @param min_exper_sample The minimum number of observations within an
-#' experiment.
-JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
-                     cov_cols, omega = 5000, comb_probs = c(0.01, 0.5, 0.99),
-                     split_probs = c(0.2, 0.95), min_exper_sample = 20) {
+#' experiment. Defaults to 20.
+#' @param jump_slope_tune The standard deviation of the proposal on the slopes.
+#' 
+JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
+                     approx_likelihood = TRUE, cov_cols, omega = 5000,
+                     mu_priorY, Sigma_priorY, comb_probs = c(0.01, 0.5, 0.99),
+                     split_probs = c(0.2, 0.95), min_exper_sample = 20,
+                     jump_slope_tune = 0.05) {
   
   r <- list(new_cutoffs = current_cutoffs, new_alphas = current_alphas,
-            acc = FALSE)
-  
-  if (!approximate) {
-    stop('approximate FALSE not supported yet.')
-  }
+            new_coefs = current_coefs, acc = FALSE,
+            current_cutoffs = current_cutoffs)
   
   minX <- min(dta$X)
   maxX <- max(dta$X)
   K <- length(current_cutoffs)
   
-  # Which cutoff will jump over.
+  # ------ STEP 1 : Choosing the cutoff that will be moved. ------- #
+  
   wh_cut <- sample(K, 1)
   cuts <- c(minX, current_cutoffs, maxX)
   
@@ -40,16 +64,32 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
   proposed_cutoffs <- sort(c(new_s, current_cutoffs[- wh_cut]))
   prop_cuts <- c(minX, proposed_cutoffs, maxX)
   
+
+  # --- If the proposed value creates experiment with no data, do not accept.
+
+  dta$new_exper <- sapply(dta$X, function(x) sum(prop_cuts < x))
+  dta$prev_exper <- sapply(dta$X, function(x) sum(cuts < x))
+  dta$new_exper[dta$new_exper == 0] <- 1
+  dta$prev_exper[dta$prev_exper == 0] <- 1
+  
+  if (length(unique(dta$new_exper)) < K + 1 |
+      any(table(dta$new_exper) < min_exper_sample)) {
+    return(r)
+  }
+  
+  
+  # ------- STEP 2: Proposing new alphas for the experiments. --------- #
+  
   
   # --- What will the proposed alphas be.
   proposed_alphas <- array(NA, dim = dim(current_alphas))
   dimnames(proposed_alphas) <- dimnames(current_alphas)
   
   # The alphas that remain the same.
-  prev_exper_same <- setdiff(exper_choice, split_exper) # Prev exper number.
-  start_same <- cuts[prev_exper_same] # Starting cutoff.
-  curr_exper_same <- which(prop_cuts %in% start_same) # Proposed experiment.
-  proposed_alphas[, curr_exper_same, ] <- current_alphas[, prev_exper_same, ]
+  curr_exper_same <- setdiff(exper_choice, split_exper) # Prev exper number.
+  start_same <- cuts[curr_exper_same] # Starting cutoff.
+  prop_exper_same <- which(prop_cuts %in% start_same) # Proposed experiment.
+  proposed_alphas[, prop_exper_same, ] <- current_alphas[, curr_exper_same, ]
   
   # The alphas that get split.
   which_new_s <- which(prop_cuts == new_s)
@@ -81,38 +121,45 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
     }
   }
   
-  # ----- Calculating the probability of acceptance ------ #
+  
+  # ------- STEP 3: Proposing coefficients for the new experiments. ------- #
+  
+  coef_prop <- JumpOverCoef(current_coefs = current_coefs,
+                            prop_cuts = prop_cuts, cuts = cuts,
+                            curr_exper_same = curr_exper_same,
+                            prop_exper_same = prop_exper_same,
+                            curr_exper_comb = curr_exper_comb,
+                            prop_exper_comb = prop_exper_comb,
+                            curr_exper_split = curr_exper_split,
+                            prop_exper_split = prop_exper_split,
+                            jump_slope_tune = jump_slope_tune)
+  proposed_coefs <- coef_prop$proposed_coefs
+  slope_u <- coef_prop$u
+  slope_u_rev <- coef_prop$u_rev
+  
+  
+  # ------- STEP 4. Calculating the probability of acceptance ------ #
   
   AR <- 0
-  dta$new_exper <- sapply(dta$X, function(x) sum(prop_cuts < x))
-  dta$prev_exper <- sapply(dta$X, function(x) sum(cuts < x))
-  dta$new_exper[dta$new_exper == 0] <- 1
-  dta$prev_exper[dta$prev_exper == 0] <- 1
-
-  # If the proposed value creates experiment with no data, do not accept.
-  if (length(unique(dta$new_exper)) < K + 1 |
-      any(table(dta$new_exper) < min_exper_sample)) {
-    return(r)
-  }
   
-  
-  # log-Likelihood difference.
+  # Step 4a. The log-Likelihood difference.
   
   # The new experiments are prop_exper_split and prop_exper_comb.
   for (ee in c(prop_exper_split, prop_exper_comb)) {
     D <- subset(dta, new_exper == ee)
     AR <- AR + LogLike(D = D, curr_exper_alphas = proposed_alphas[, ee, ],
-                       cov_cols = cov_cols)
+                       curr_coefsY = proposed_coefs[2, ee, 1 : 2],
+                       X_s_cut = prop_cuts[ee], cov_cols = cov_cols)
   }
   for (ee in c(curr_exper_split, curr_exper_comb)) {
     D <- subset(dta, prev_exper == ee)
     AR <- AR - LogLike(D = D, curr_exper_alphas = current_alphas[, ee, ],
-                       cov_cols = cov_cols)
+                       curr_coefsY = current_coefs[2, ee, 1 : 2],
+                       X_s_cut = cuts[ee], cov_cols = cov_cols)
   }
   
   
-  
-  # log prior difference.
+  # Step 4b. The log prior difference.
   
   # For the cutoffs.
   diff_prop <- sapply(2 : (K + 2), function(x) prop_cuts[x] - prop_cuts[x - 1])
@@ -120,6 +167,7 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
   
   diff_curr <- sapply(2 : (K + 2), function(x) cuts[x] - cuts[x - 1])
   AR <- AR - sum(log(diff_curr))
+  
   
   # For the alphas.
   prob_alphas <- matrix(c(omega, omega, 1, omega) / (3 * omega + 1),
@@ -141,10 +189,18 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
   wh_cols <- as.numeric(colnames(tab_alphas_curr)) + 1
   AR <- AR - sum(tab_alphas_curr * log(prob_alphas)[wh_rows, wh_cols])
   
-
   
-  # log proposal difference.
+  # For the slopes that changed.
+  prior_sd <- sqrt(Sigma_priorY[2, 2])
+  AR <- AR +
+    sum(dnorm(proposed_coefs[2, , 2], mean = mu_priorY[2],
+              sd = prior_sd, log = TRUE)) -
+    sum(dnorm(current_coefs[2, , 2], mean = mu_priorY[2],
+              sd = prior_sd, log = TRUE))
   
+  
+  
+  # Step 4c. The log proposal difference.
   
   # For the cutoffs.
   
@@ -194,12 +250,23 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, approximate = TRUE,
   AR <- AR - sum(t(tab_alpha_comb) * log(probs_alpha_split)[wh_rows, wh_cols])
   
   
+  # For the slopes.
+  AR <- AR + dnorm(slope_u_rev, mean = 0, sd = jump_slope_tune, log = TRUE)
+  AR <- AR - dnorm(slope_u, mean = 0, sd = jump_slope_tune, log = TRUE)
+  
+  
   # ------- Accepting or rejecting the move. -------- #
-  if (log(runif(1)) < AR) {
-    r$new_cutoffs <- proposed_cutoffs
-    r$new_alphas <- proposed_alphas
-    r$acc <- TRUE
+  acc <- (log(runif(1)) < AR)
+  if (!acc) {
+    return(r)
   }
+  
+  # Else we accepted the move.
+  
+  r$new_cutoffs <- proposed_cutoffs
+  r$new_alphas <- proposed_alphas
+  r$acc <- TRUE
+  r$new_coefs <- proposed_coefs
   return(r)
 }
 

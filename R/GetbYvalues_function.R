@@ -1,3 +1,5 @@
+#' Experiments' outcome model intercepts for continuous ER.
+#' 
 #' Get the bY values that make the ER curve continuous in simulated data when
 #' the X-Y relationship is truly piecewise linear.
 #'
