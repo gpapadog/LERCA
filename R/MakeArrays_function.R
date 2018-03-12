@@ -16,13 +16,20 @@
 #' (exposure / outcome), the experiment, and the potential confounders. Entries
 #' 0/1 represent exclusion/inclusion of the covariate in the corresponding
 #' model.
+#' @param starting_coefs Array with the starting values of all coefficients.
+#' Dimensions are: Exposure/Outcome model, chains, experiments, and covariate
+#' (intercept, coefficient of exposure, covariates). The coefficient of
+#' exposure should be NA for the exposure model.
+#' @param starting_vars Array including the starting values for the residual
+#' variances. Dimensions correspond to: Exposure/Outcome model, chains, and
+#' experiment.
 #' @param min_exper_sample The minimum number of observations within an
 #' experiment. It will be used to ensure that starting cutoffs are allowed
 #' under the prior specification.
 #' 
 MakeArrays <- function(X = NULL, chains, Nsims, num_exper, num_conf, omega,
                        minX, maxX, starting_cutoffs, starting_alphas,
-                       min_exper_sample = 0) {
+                       starting_coefs, starting_vars, min_exper_sample = 0) {
   
   # Alphas. Starting values are from the prior.
   
@@ -50,24 +57,6 @@ MakeArrays <- function(X = NULL, chains, Nsims, num_exper, num_conf, omega,
     }
     alphas[, , 1, , ] <- starting_alphas
   }
-  
-  # Coefficient and variance values.
-  
-  variances <- array(1, dim = c(2, chains, Nsims, num_exper))
-  dimnames(variances) <- list(model = c('Exposure', 'Outcome'),
-                              chain = 1 : chains, sample = 1 : Nsims,
-                              exper = 1 : num_exper)
-  
-  cov_names <- c('Int', 'X')
-  if (num_conf > 0) {
-    cov_names <- c(cov_names, paste0('C', 1 : num_conf))
-  }
-  coefs <- array(0, dim = c(2, chains, Nsims, num_exper, num_conf + 2))
-  dimnames(coefs) <- list(model = c('Exposure', 'Outcome'),
-                          chain = 1 : chains, sample = 1 : Nsims,
-                          exper = 1 : num_exper, covar = cov_names)
-  coefs[1, , , , 2] <- NA  # No exposure coefficient for exposure model.
-  
   
   # Experiment configuration with starting values from the prior if NULL.
   
@@ -103,27 +92,56 @@ MakeArrays <- function(X = NULL, chains, Nsims, num_exper, num_conf, omega,
   cutoffs[, 1, ] <- starting_cutoffs[1 : chains, ]
   
   
+  # Array for variances.
   
-  # Starting values for coefficients and variances.
-  for (cc in 1 : chains) {
-    for (ee in 1 : (K + 1)) {
-      coefs[1, cc, 1, ee, - 2] <- rnorm(num_conf + 1, mean = 0, sd = 10)
-      coefs[2, cc, 1, ee, - 1] <- rnorm(num_conf + 1, mean = 0, sd = 10)
+  variances <- array(1, dim = c(2, chains, Nsims, num_exper))
+  dimnames(variances) <- list(model = c('Exposure', 'Outcome'),
+                              chain = 1 : chains, sample = 1 : Nsims,
+                              exper = 1 : num_exper)
+  
+  if (is.null(starting_vars)) {
+    starting_vars <- array(NA, dim = c(2, chains, num_exper))
+    for (cc in 1 : chains) {
+      starting_vars[1, cc, ] <- invgamma::rinvgamma(num_exper, 10, 20)
+      starting_vars[2, cc, ] <- invgamma::rinvgamma(num_exper, 10, 20)
     }
-    variances[1, cc, 1, ] <- invgamma::rinvgamma(num_exper, 10, 20)
-    variances[2, cc, 1, ] <- invgamma::rinvgamma(num_exper, 10, 20)
   }
-  # Intercept starting values.
-  for (cc in 1 : chains) {
-    exact_cuts <- c(minX, cutoffs[cc, 1, ], maxX)
-    coefs[2, cc, 1, ee, 1] <- rnorm(1, mean = 0, sd = 10)
+  variances[, , 1, ] <- starting_vars
+  
+  
+  # Array for coefficients.
+  
+  cov_names <- c('Int', 'X')
+  if (num_conf > 0) {
+    cov_names <- c(cov_names, paste0('C', 1 : num_conf))
+  }
+  coefs <- array(0, dim = c(2, chains, Nsims, num_exper, num_conf + 2))
+  dimnames(coefs) <- list(model = c('Exposure', 'Outcome'),
+                          chain = 1 : chains, sample = 1 : Nsims,
+                          exper = 1 : num_exper, covar = cov_names)
+  coefs[1, , , , 2] <- NA  # No exposure coefficient for exposure model.
+  
+  if (is.null(starting_coefs)) {
+    starting_coefs <- array(NA, dim = c(2, chains, num_exper, num_conf + 2))
+    starting_coefs[1, , , - 2] <- rnorm(chains * num_exper * (num_conf + 1),
+                                        mean = 0, sd = 10)
+    starting_coefs[2, , , - 1] <- rnorm(chains * num_exper * (num_conf + 1),
+                                        mean = 0, sd = 10)
     
-    for (ee in 1 : K) {
-      interval <- exact_cuts[ee + 1] - exact_cuts[ee]
-      coefs[2, cc, 1, ee + 1, 1] <- coefs[2, cc, 1, ee, 1] +
-        coefs[2, cc, 1, ee, 2] * interval
+    # Intercept starting values.
+    starting_coefs[2, , 1, 1] <- rnorm(chains, mean = 0, sd = 10)
+    
+    for (cc in 1 : chains) {
+      exact_cuts <- c(minX, cutoffs[cc, 1, ], maxX)
+      for (ee in 1 : K) {
+        interval <- exact_cuts[ee + 1] - exact_cuts[ee]
+        next_int <- starting_coefs[2, cc, ee, 1]
+        next_int <- next_int + starting_coefs[2, cc, ee, 2] * interval 
+        starting_coefs[2, cc, ee + 1, 1] <- next_int
+      }
     }
   }
+  coefs[, , 1, , ] <- starting_coefs
   
   return(list(alphas = alphas, cutoffs = cutoffs, coefs = coefs,
               variances = variances))

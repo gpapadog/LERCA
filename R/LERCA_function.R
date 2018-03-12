@@ -40,6 +40,13 @@
 #' (exposure / outcome), the experiment, and the potential confounders. Entries
 #' 0/1 represent exclusion/inclusion of the covariate in the corresponding
 #' model.
+#' @param starting_coefs Array with the starting values of all coefficients.
+#' Dimensions are: Exposure/Outcome model, chains, experiments, and covariate
+#' (intercept, coefficient of exposure, covariates). The coefficient of
+#' exposure should be NA for the exposure model.
+#' @param starting_vars Array including the starting values for the residual
+#' variances. Dimensions correspond to: Exposure/Outcome model, chains, and
+#' experiment.
 #' @param approx_likelihood Logical. If set to TRUE the likelihood of the data
 #' in the jump over and jump within moves will be calculated based on the BIC
 #' approximation. Defaults to TRUE. Option FALSE not supported for now.
@@ -79,6 +86,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                   alpha_priorY = 0.001, beta_priorY = 0.001,
                   starting_cutoffs = NULL,
                   starting_alphas = NULL,
+                  starting_coefs = NULL,
+                  starting_vars = NULL,
                   approx_likelihood = TRUE,
                   prop_distribution = c('Uniform', 'Normal'),
                   normal_percent = 1, plot_every = 0,
@@ -134,6 +143,8 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
                        omega = omega, minX = minX, maxX = maxX,
                        starting_cutoffs = starting_cutoffs,
                        starting_alphas = starting_alphas,
+                       starting_coefs = starting_coefs, 
+                       starting_vars = starting_vars,
                        min_exper_sample = min_exper_sample)
   cutoffs <- arrays$cutoffs
   coefs <- arrays$coefs
@@ -297,9 +308,24 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
       }
     }
   }
+  
+  lerca_specs <- list(cov_cols = cov_cols, omega = omega,
+                      mu_priorX = mu_priorX, Sigma_priorX = Sigma_priorX,
+                      mu_priorY = mu_priorY, Sigma_priorY = Sigma_priorY,
+                      alpha_priorX = alpha_priorX, beta_priorX = beta_priorX,
+                      alpha_priorY = alpha_priorY, beta_priorY = beta_priorY,
+                      approx_likelihood = approx_likelihood,
+                      prop_distribution = prop_distribution,
+                      normal_percent = normal_percent,
+                      comb_probs = comb_probs, split_probs = split_probs,
+                      s_upd_probs = s_upd_probs, alpha_probs = alpha_probs,
+                      min_exper_sample = min_exper_sample,
+                      jump_slope_tune = jump_slope_tune)
+  
   return(list(cutoffs = cutoffs, alphas = alphas, coefs = coefs,
               variances = variances, acc = acc,
-              acc_percent = acc[, 2, ] / acc[, 1, ]))
+              acc_percent = acc[, 2, ] / acc[, 1, ],
+              lerca_specs = lerca_specs))
 }
 
 
