@@ -18,10 +18,14 @@ LERCAextend <- function(dta, extend_Nsims, lerca, plot_every = 0) {
   K <- dim(lerca$cutoffs)[3]
   prev_Nsims <- dim(lerca$cutoffs)[2]
   
-  starting_cutoffs <- lerca$cutoffs[, prev_Nsims, ]
-  starting_alphas <- lerca$alphas[, , prev_Nsims, , ]
-  starting_coefs <- lerca$coefs[, , prev_Nsims, , ]
-  starting_vars <- lerca$variances[, , prev_Nsims, ]
+  starting_cutoffs <- lerca$cutoffs[, prev_Nsims, , drop = FALSE]
+  starting_cutoffs <- abind::adrop(starting_cutoffs, drop = 2)
+  starting_alphas <- lerca$alphas[, , prev_Nsims, , , drop = FALSE]
+  starting_alphas <- abind::adrop(starting_alphas, drop = 3)
+  starting_coefs <- lerca$coefs[, , prev_Nsims, , , drop = FALSE]
+  starting_coefs <- abind::adrop(starting_coefs, drop = 3)
+  
+  starting_vars <- lerca$variances[, , prev_Nsims, , drop = FALSE]
   
   cov_cols <- lerca$lerca_specs$cov_cols
   omega <- lerca$lerca_specs$omega
