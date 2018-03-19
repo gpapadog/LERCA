@@ -2,7 +2,7 @@
 % Please edit documentation in R/GetER_function.R
 \name{GetER}
 \alias{GetER}
-\title{CER from MCMC of multiple chains.}
+\title{CER estimates from LERCA fit.}
 \usage{
 GetER(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
   mean_only = FALSE, other_function = NULL)
@@ -32,5 +32,6 @@ of the mean ER. Defaults to FALSE.}
 predictions. Defaults to NULL. Examples include exp(x), log(x).}
 }
 \description{
-When multiple chains are ran, we use GetER to get the posterior CER samples.
+Use this function to acquire the ER estimates from a LERCA fit for a set of
+exposure values.
 }

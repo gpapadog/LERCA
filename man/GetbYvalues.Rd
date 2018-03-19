@@ -2,8 +2,7 @@
 % Please edit documentation in R/GetbYvalues_function.R
 \name{GetbYvalues}
 \alias{GetbYvalues}
-\title{Get the bY values that make the ER curve continuous in simulated data when
-the X-Y relationship is truly piecewise linear.}
+\title{Experiments' outcome model intercepts for continuous ER.}
 \usage{
 GetbYvalues(num_exper, Xrange = NULL, exper_change = NULL, bYX,
   interYexp1 = 0, out_coef, meanC, weights = NULL,

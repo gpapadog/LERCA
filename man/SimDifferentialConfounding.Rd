@@ -7,7 +7,7 @@
 SimDifferentialConfounding(N, num_exper, XCcorr, varC, Xrange,
   exper_change = NULL, meanCexp1 = NULL, out_coef, interYexp1 = 0, bYX,
   Ysd = 1, overall_meanC = c("true", "observed"),
-  XY_function = c("linear", "other"), XY_spec = NULL)
+  XY_function = c("linear", "other"), XY_spec = NULL, center_covs = TRUE)
 }
 \arguments{
 \item{N}{Sample size.}
@@ -61,13 +61,15 @@ arguement (set 'other').}
 \item{XY_spec}{Needs to be specified if XY_function is set to 'other'. It is
 the function that specifies the true ER relationship. Defaults to NULL.}
 
+\item{center_covs}{Logical. Whether the potential confounders should be
+centered before generating the outcome. Defaults to TRUE.}
+
 \item{exper_range}{The points of the exposure range Xrange at which
 differential confounding might occur.}
 }
 \description{
-Funcition that generates data where different variables are confounders of
-the exposure-response relationship based on the exposure range we are
-looking at.
+Generate data with different variables are confounders of the exposure-
+response relationship at different exposure levels.
 }
 \examples{
 XCcorr <- matrix(c(0.4, 0.2, 0.2, 0), 2, 2)

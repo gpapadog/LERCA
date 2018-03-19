@@ -13,6 +13,11 @@ of the exposure and outcome models.}
 \item{dta}{The full data set including the confounders as C1, C2, ..., the
 outcome as Y and the exposure as X.}
 }
+\value{
+Numeric vector with entries: the estimated log predictive density,
+the penalty term based on both criteria, and the WAIC based on both penalty
+criteria.
+}
 \description{
 WAIC of LERCA fit using the full conditionals.
 }

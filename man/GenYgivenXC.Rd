@@ -7,6 +7,8 @@
 GenYgivenXC(dataset, out_coef, bY, bYX, Ysd, XY_function, XY_spec = NULL)
 }
 \arguments{
+\item{dataset}{A data frame containing X, C1, C2, ..., and E.}
+
 \item{out_coef}{A matrix where the ij element is the coefficient of
 covariate Ci in the outcome model of experiment j.}
 
@@ -27,8 +29,6 @@ arguement (set 'other').}
 
 \item{XY_spec}{Needs to be specified if XY_function is set to 'other'. It is
 the function that specifies the true ER relationship. Defaults to NULL.}
-
-\item{dta}{A data frame containing X, C1, C2, ..., and E.}
 }
 \description{
 In the simulated data, we specify the outcome model and residual variance

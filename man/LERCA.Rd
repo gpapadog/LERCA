@@ -7,11 +7,115 @@
 LERCA(dta, chains, Nsims, K, cov_cols, omega = 5000, mu_priorX = NULL,
   Sigma_priorX = NULL, mu_priorY = NULL, Sigma_priorY = NULL,
   alpha_priorX = 0.001, beta_priorX = 0.001, alpha_priorY = 0.001,
-  beta_priorY = 0.001, starting_cutoffs = NULL,
+  beta_priorY = 0.001, starting_cutoffs = NULL, starting_alphas = NULL,
+  starting_coefs = NULL, starting_vars = NULL, approx_likelihood = TRUE,
   prop_distribution = c("Uniform", "Normal"), normal_percent = 1,
   plot_every = 0, comb_probs = c(0.01, 0.5, 0.99), split_probs = c(0.2,
-  0.95), s_upd_probs = c(94/100, 1/100, 5/100), alpha_probs = c(0.01, 0.5,
-  0.99), min_exper_sample = 20)
+  0.95), s_upd_probs = c(0.8, 0.1, 0.1), alpha_probs = c(0.01, 0.5, 0.99),
+  min_exper_sample = 20, jump_slope_tune = 0.05)
+}
+\arguments{
+\item{dta}{A data set including a column of the exposure of interest as X,
+the outcome of interest as Y, and all potential confounders as C1, C2, ...}
+
+\item{chains}{The number of MCMC chains.}
+
+\item{Nsims}{The number of posterior samples per chain.}
+
+\item{K}{The number of points in the experiment configuration.}
+
+\item{cov_cols}{The indices of the columns in dta corresponding to the
+potential confounders.}
+
+\item{omega}{The parameter of the BAC prior on the inclusion indicators.}
+
+\item{mu_priorX}{The mean of the normal prior on the coefficients of the
+exposure model. Numeric vector of length equal to the number of potential
+confounders + 1 with the first entry corresponding to the intercept. If left
+NULL, it is set to 0 for all parameters.}
+
+\item{Sigma_priorX}{Covariance matrix of the normal prior on the regression
+coefficients of the exposure model. If left NULL, it is set to diagonal with
+entries 100 ^ 2 for all parameters.}
+
+\item{mu_priorY}{The mean of the normal prior on the coefficients of the
+outcome model. Numeric vector with entries corresponding to intercept, slope
+of exposure, and potential covariates.  If left NULL, it is set to 0 for all
+parameters.}
+
+\item{Sigma_priorY}{The covariance matrix of the normal prior on the
+regression coefficients of the outcome model. If left NULL, it is set to
+diagonal with entries 100 ^ 2 for all parameters.}
+
+\item{alpha_priorX}{The shape parameter of the inverse gamma prior on the
+residual variance of the exposure model.}
+
+\item{beta_priorX}{The rate parameter of the inverse gamma prior on the
+residual variance of the exposure model.}
+
+\item{alpha_priorY}{The shape parameter of the inverse gamma prior on the
+residual variance of the outcome model.}
+
+\item{beta_priorY}{The rate parameter of the inverse gamma prior on the
+residual variance of the outcome model.}
+
+\item{starting_alphas}{Array with dimensions corresponding to the model
+(exposure / outcome), the experiment, and the potential confounders. Entries
+0/1 represent exclusion/inclusion of the covariate in the corresponding
+model.}
+
+\item{starting_coefs}{Array with the starting values of all coefficients.
+Dimensions are: Exposure/Outcome model, chains, experiments, and covariate
+(intercept, coefficient of exposure, covariates). The coefficient of
+exposure should be NA for the exposure model.}
+
+\item{starting_vars}{Array including the starting values for the residual
+variances. Dimensions correspond to: Exposure/Outcome model, chains, and
+experiment.}
+
+\item{approx_likelihood}{Logical. If set to TRUE the likelihood of the data
+in the jump over and jump within moves will be calculated based on the BIC
+approximation. Defaults to TRUE. Option FALSE not supported for now.}
+
+\item{prop_distribution}{Character vector. Options include 'Uniform' or
+'Normal' representing the type of distribution that will be used to propose
+a move of the cutoffs in the separate update. Defaults to uniform.}
+
+\item{normal_percent}{Numeric. Parameter controling the width of a normal
+proposal for the experiment configuration. Used only when prop_distribution
+is set to Normal. Smaller values represent smaller variance of the truncated
+normal proposal distribution.}
+
+\item{plot_every}{Integer. Plot the locations of the experiment
+configuration every plot_every iteration. Defaults to 0 leading to no
+plotting.}
+
+\item{comb_probs}{When two experiments are combined, comb_probs represents
+the probability of alpha = 1 when 0, 1, and 2 corresponding alphas are equal
+to 1. Vector of length 3. Defaults to (0.01, 0.5, 0.99).}
+
+\item{split_probs}{When one experiment is split, split_probs describes the
+probability that the alpha of a new experiment is equal to 1, when the alpha
+of the current experiment is 0, and when it is 1. Vector of length 2.
+Defaults to (0.2, 0.95).}
+
+\item{s_upd_probs}{Numeric of length three. The probability that each of the
+separate, jump over, and jump within moves is proposed. Defaults to (0.8,
+0.1, 0.1).}
+
+\item{alpha_probs}{The probability that a proposed alpha is equal to 1, when
+0, 1, and 2 alphas of the surrounding experiments are equal to 1. Vector of
+length 3. Defaults to (0.01, 0.5, 0.99).}
+
+\item{min_exper_sample}{The minimum number of observations within an
+experiment. Defaults to 20.}
+
+\item{jump_slope_tune}{The standard deviation of the proposal on the slopes
+for the jump over move. Defaults to 0.05.}
+
+\item{starting}{cutoffs Matrix with rows corresponding to different chains.
+Each row includes K ordered values of MCMC starting cutoffs. If left NULL,
+random started values are used.}
 }
 \description{
 Function that calculates the mean exposure response curve allowing for

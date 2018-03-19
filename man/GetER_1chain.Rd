@@ -2,7 +2,7 @@
 % Please edit documentation in R/GetER_1chain_function.R
 \name{GetER_1chain}
 \alias{GetER_1chain}
-\title{Calculate the CER}
+\title{Calculating the exposure response function for one MCMC chain.}
 \usage{
 GetER_1chain(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
   mean_only = FALSE, other_function = NULL)
@@ -34,10 +34,6 @@ to FALSE.}
 predictions. Defaults to NULL. Examples include exp(x), log(x).}
 }
 \description{
-Calculate the average ER function from posterior cutoff and coefficient values from
-one MCMC chain.
-}
-\details{
 Function that takes the posterior samples of cutoffs, inclusion indicators and
 coefficients of the outcome model and returns the posterior mean response for
 multiple values of the exposure.
