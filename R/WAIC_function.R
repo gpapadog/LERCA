@@ -15,7 +15,7 @@ WAIC <- function(lerca, dta) {
   dta <- as.data.frame(dta)
   N <- nrow(dta)
   num_conf <- dim(lerca$alphas)[5]
-  covs_cols <- which((names(dta) %in% paste0('C', 1 : num_conf)))
+  cov_cols <- which((names(dta) %in% paste0('C', 1 : num_conf)))
   post_samples <- dim(lerca$cutoffs)[2]
   chains <- dim(lerca$cutoffs)[1]
   
@@ -27,8 +27,13 @@ WAIC <- function(lerca, dta) {
   pwaic1 <- 0
   pwaic2 <- 0
   
+  progress <- floor(seq(0, N, length.out = 11)[- 1])
+  
   for (ii in 1 : N) {
     
+    if (ii %in% progress) {
+      print(paste0(which(progress == ii) * 10, '% completed.'))
+    }
     like <- matrix(NA, nrow = post_samples, ncol = chains)
     
     for (ss in 1 : post_samples) {
