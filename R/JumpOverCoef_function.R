@@ -43,15 +43,17 @@ JumpOverCoef <- function(current_coefs, prop_cuts, cuts, curr_exper_same,
   proposed_coefs[2, 1, 1] <- current_coefs[2, 1, 1]
   
   # Intercept and slope of unchanged experiments, intercept of next.
-  for (ee in 1 : length(prop_exper_same)) {
-    set_exper <- prop_exper_same[ee]
-    proposed_coefs[2, set_exper, ] <- current_coefs[2, curr_exper_same[ee], ]
-    
-    if (set_exper <= K) {
-      next_int <- proposed_coefs[2, set_exper, 1]
-      interval <- prop_cuts[set_exper + 1] - prop_cuts[set_exper]
-      next_int <- next_int + proposed_coefs[2, set_exper, 2] * interval
-      proposed_coefs[2, set_exper + 1, 1] <- next_int
+  if (length(prop_exper_same) > 0) {  # For K greater or equal to 3.
+    for (ee in 1 : length(prop_exper_same)) {
+      set_exper <- prop_exper_same[ee]
+      proposed_coefs[2, set_exper, ] <- current_coefs[2, curr_exper_same[ee], ]
+      
+      if (set_exper <= K) {
+        next_int <- proposed_coefs[2, set_exper, 1]
+        interval <- prop_cuts[set_exper + 1] - prop_cuts[set_exper]
+        next_int <- next_int + proposed_coefs[2, set_exper, 2] * interval
+        proposed_coefs[2, set_exper + 1, 1] <- next_int
+      }
     }
   }
   

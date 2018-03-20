@@ -59,7 +59,11 @@ JumpOver <- function(dta, current_cutoffs, current_alphas, current_coefs,
   prob_exper <- sapply(2 : length(cuts), function(x) cuts[x] - cuts[x - 1])
   prob_exper <- prob_exper[- c(wh_cut, wh_cut + 1)]
   # Cutoff will be moved to experiment:
-  split_exper <- sample(exper_choice, 1, prob = prob_exper)
+  if (length(exper_choice) == 1) {
+    split_exper <- exper_choice
+  } else {
+    split_exper <- sample(exper_choice, 1, prob = prob_exper)
+  }
   new_s <- runif(1, min = cuts[split_exper], max = cuts[split_exper + 1])
   proposed_cutoffs <- sort(c(new_s, current_cutoffs[- wh_cut]))
   prop_cuts <- c(minX, proposed_cutoffs, maxX)
