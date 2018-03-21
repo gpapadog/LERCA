@@ -14,7 +14,7 @@ WAIC <- function(lerca, dta) {
   
   dta <- as.data.frame(dta)
   N <- nrow(dta)
-  num_conf <- dim(lerca$alphas)[5]
+  num_conf <- dim(lerca$coefs)[5] - 2
   cov_cols <- which((names(dta) %in% paste0('C', 1 : num_conf)))
   post_samples <- dim(lerca$cutoffs)[2]
   chains <- dim(lerca$cutoffs)[1]
