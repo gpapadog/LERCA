@@ -19,8 +19,7 @@ Local Exposure Response Confounding Adjustment R package.
 
 - JumpWithin: Performing the jump within move for the update of the experiment configuration and inclusion indicators.
 
-- *LERCA*:
-The central function of the package. Function to fit LERCA to the data.
+- **LERCA**: The central function of the package. Function to fit LERCA to the data.
 
 - LogLike: Function that calculates the log likelihood of the data.
 
