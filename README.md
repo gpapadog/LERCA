@@ -5,42 +5,43 @@ Local Exposure Response Confounding Adjustment R package.
 
 ## Functions
 
-- BurnThin_function.R 
+- BurnThin: Function that performs burning and thinning of the MCMC chains.
 
-- GenYgivenXC_function.R   
+- GenYgivenXC: Function that generates the outcome given exposure and covariates.
 
-- GetbYvalues_function.R   
+- GetbYvalues: Getting the intercepts of the outcome models for each experiment ensuring a continuous ER.
 
-- GetER_1chain_function.R  
+- GetER_1chain: Using the posterior samples of one chain to acquire samples of the mean ER.
 
-- GetER_function.R         
+- GetER: Calling GetER_1chain for each chain to aquire posterior samples of the mean ER for all chains.
 
-- JumpOver_function.R      
+- JumpOver: Performing the jump over move for the update of the experiment configuration and inclusion indicators.
 
-- JumpWithin_function.R    
+- JumpWithin: Performing the jump within move for the update of the experiment configuration and inclusion indicators.
 
-- LERCA_function.R    
+- ### LERCA:
+The central function of the package. Function to fit LERCA to the data.
 
-- LogLike_function.R                     
+- LogLike: Function that calculates the log likelihood of the data.
 
-- MakeArrays_function.R                  
+- MakeArrays: Function that creates arrays where the LERCA results are saved.
 
-- psr_function.R                         
+- psr: Function that calculates the PSR based on the mean ER posterior samples.
 
-- SimDifferentialConfounding_function.R  
+- SimDifferentialConfounding: Function that generates data with differential confounding.
 
-- TrueER_function.R
+- TrueER: Function that calculates the true mean ER.
 
-- UpdateAlphas_function.R
+- UpdateAlphas: Function that updates the inclusion indicators.
 
-- UpdateCoefficients_function.R
+- UpdateCoefficients: Function that updates all coefficients but intercepts of the outcome model and the coefficient of exposure in the outcome model.
 
-- UpdateExperiments_function.R
+- UpdateExperiments: Function that updates the experiment configuration when the update is separate from the update of the inclusion indicators.
 
-- UpdateVariances_function.R
+- UpdateVariances: Function that updates the residual variances.
 
-- WAIC_function.R
+- WAIC: Function that calculates the WAIC of the LERCA fit.
 
-- XCcontinuous_function.R
+- XCcontinuous: Function that ensures that the mean exposure-covariates relationship is continuous.
 
 
