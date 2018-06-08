@@ -2,8 +2,24 @@
 
 Local Exposure Response Confounding Adjustment R package.
 
+# Installing LERCA
 
-## Functions
+Installing and using LERCA in Rstudio is straightforward. You will first need the ```devtools``` R package.
+
+```
+install.packages('devtools')
+library(devtools)
+devtools::install_github("gpapadog/DAPSm")
+```
+
+# LERCA example
+
+## Generating data
+
+In order to generate data with local confounding you can use the ```SimDifferentialConfounding``` function. Below is the code that one could use to generate the toyData used throughout the examples on this R package.
+
+
+### Functions
 
 - BurnThin: Function that performs burning and thinning of the MCMC chains.
 
