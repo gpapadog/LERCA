@@ -58,6 +58,42 @@ toyData <- SimDifferentialConfounding(N = N, num_exper = num_exper,
 toyData <- toyData$data
 ```
 
+### Fitting LERCA on the toy data set.
+
+First we fit LERCA on the data set. All we need is to set the MCMC specifications and to tell the function which columns correspond to the covariates that are potential confounders. We also need to set the number of points in the experiment configuration.
+
+```
+# MCMC specifications like number of chains and posterior samples.
+chains <- 3
+Nsims <- 4000
+K <- 2  # Number of points in the experiment configuration.
+
+# Which columns of the data set correspond to covariates.
+cov_cols <- which(names(toyData) %in% paste0('C', 1 : num_conf))
+omega <- 5000
+
+lerca <- LERCA(dta = toyData, chains = chains, Nsims = Nsims, K = K,
+               cov_cols = cov_cols, omega = omega)
+```
+
+We can burn and thin the sample:
+
+```
+burn <- 2000
+thin <- 10
+lerca_short <- BurnThin(lerca = lerca, burn = burn, thin = thin)
+```
+
+Based on these posterior samples, we can get the model's WAIC.
+```
+waic <- WAIC(lerca = lerca_short, dta = toyData)
+```
+which returns
+```
+     lppd    pwaic1    pwaic2     waic1     waic2 
+-2591.381  1401.320  2265.188  7985.402  9713.137 
+```
+
 ## Functions
 
 - BurnThin: Function that performs burning and thinning of the MCMC chains.
