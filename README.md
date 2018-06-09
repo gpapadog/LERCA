@@ -84,6 +84,8 @@ thin <- 10
 lerca_short <- BurnThin(lerca = lerca, burn = burn, thin = thin)
 ```
 
+### Choosing the value of K based on the WAIC.
+
 Based on these posterior samples, we can get the model's WAIC.
 ```
 waic <- WAIC(lerca = lerca_short, dta = toyData)
@@ -92,6 +94,45 @@ which returns
 ```
      lppd    pwaic1    pwaic2     waic1     waic2 
 -2591.381  1401.320  2265.188  7985.402  9713.137 
+```
+the log posterior predictive density, the penalty based on the two definitions and the corresponding WAIC based on the two penalty definitions.
+
+This can be compared to the WAIC for a model with _K =3_.
+```
+lerca2 <- LERCA(dta = toyData, chains = chains, Nsims = Nsims, K = 3,
+               cov_cols = cov_cols, omega = omega)
+lerca_short2 <- BurnThin(lerca = lerca2, burn = burn, thin = thin)
+waic2 <- WAIC(lerca = lerca_short2, dta = toyData)
+> waic2
+     lppd    pwaic1    pwaic2     waic1     waic2 
+-2467.785  1775.760  3503.118  8487.090 11941.808 
+```
+We can easily see that LERCA with _K=3_ has higher WAIC for both definitions of the penalty. Therefore, _K=2_ would be preferred.
+
+### Visualizing the results.
+
+In order to easily visualize the results the package includes the following functions:
+```
+# Get the ER estimates over a set of exposure values.
+ER <- GetER(dta = toyData, cutoffs = lerca_short$cutoffs,
+            coefs = lerca_short$coefs[2, , , , ], mean_only = TRUE)
+            
+# Acquire the inclusion probabilities as a function of the exposure for both models.
+inclusion <- ExposureInclusion(lerca = lerca_short, exp_values = ER$x)
+
+# Acquire the coefficients as a function of the exposure.
+coefs <- ExposureCoefs(lerca = lerca_short, exp_values = ER$x)
+```
+The last one is particularly useful for acquiring the coefficient of the exposure in the outcome model which corresponds to the causal quantity of interest.
+
+The inclusion probabilities are the ones to be used to understand which covariates are important at different exposure levels.
+
+Results can be easily plotted using the function provided:
+```
+probs <- c(0.1, 0.9)
+plots <- PlotLERCA(dta = toyData, lerca = lerca_short, ER = ER, probs = probs,
+                   coefs = coefs, inclusion = inclusion, variable = 3,
+                   wh_model = 2)
 ```
 
 ## Functions
