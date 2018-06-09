@@ -20,6 +20,43 @@ In order to generate data with local confounding you can use the ```SimDifferent
 
 This specific data set has three true experiments with four potential confounders. In experiment 1, C<sub>1</sub> is a confounder, in experiment 2, C<sub>1</sub> and C<sub>3</sub> are confounders, and in experiment 3, C<sub>3</sub> is a confounder.
 
+```
+library(LERCA)
+set.seed(1234)
+
+N <- 400  # Sample size.
+num_exper <- 3  # Number of experiments.
+num_conf <- 4  # Number of potential confounders.
+
+# Correlation of covariates with the exposure in each experiment.
+XCcorr <- matrix(NA, nrow = num_conf, ncol = num_exper)
+XCcorr[1, ] <- c(0.3, 0.2, 0)
+XCcorr[2, ] <- c(0.3, 0, 0)
+XCcorr[3, ] <- c(0, 0.2, 0.4)
+XCcorr[4, ] <- c(0, 0, 0)
+
+# Covariates' outcome model coefficients.
+out_coef <- matrix(NA, nrow = num_conf, ncol = num_exper)
+out_coef[1, ] <- c(0.5, 0.6, 0)
+out_coef[2, ] <- c(0, 0, 0)
+out_coef[3, ] <- c(0, 0.6, 0.4)
+out_coef[4, ] <- c(0.3, 0.3, 0.3)
+
+varC <- rep(1, num_conf)
+
+# Exposure range and true experiment configuration.
+Xrange <- c(0, 6)
+exper_change <- c(0, 2, 4, 6)
+
+# True coefficients of exposure in each experiment.
+bYX <- c(0, 2, 1)
+
+toyData <- SimDifferentialConfounding(N = N, num_exper = num_exper,
+                                      XCcorr = XCcorr, out_coef = out_coef,
+                                      varC = varC, Xrange = Xrange,
+                                      exper_change = exper_change, bYX = bYX)
+toyData <- toyData$data
+```
 
 ## Functions
 
