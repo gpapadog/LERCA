@@ -36,6 +36,7 @@ UpdateAlphas <- function(dta, cov_cols, current_cutoffs, current_alphaY,
                          current_coefs, current_vars, mu_priorX, Sigma_priorX,
                          mu_priorY, Sigma_priorY, omega) {
   
+  K <- length(current_cutoffs)
   minX <- min(dta$X)
   maxX <- max(dta$X)
   num_conf <- length(cov_cols)

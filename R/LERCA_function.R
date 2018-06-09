@@ -120,7 +120,6 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
     }
   }
   
-  
   if (is.null(mu_priorX)) {
     mu_priorX <- rep(0, num_conf + 1)
   }
@@ -135,7 +134,6 @@ LERCA <- function(dta, chains, Nsims, K, cov_cols, omega = 5000,
   if (is.null(Sigma_priorY)) {
     Sigma_priorY <- diag(rep(100 ^ 2, num_conf + 2))
   }
-  
   
   # -------- Where to save --------- #
   arrays <- MakeArrays(X = dta$X, chains = chains, Nsims = Nsims,

@@ -14,6 +14,8 @@
 #' and as acquired using ExposureInclusion().
 #' @param coefs The coefficients as a function of the exposure as acquired
 #' using ExposureCoefs().
+#' 
+#' @export
 PlotLERCA <- function(dta, lerca, ER, variable = NULL, wh_model = NULL,
                       probs, inclusion = NULL, coefs = NULL) {
   
