@@ -141,9 +141,11 @@ Plots produced using this function include the estimated ER, the posterior distr
 ![Alt text](images/observed.png)
 
 Coefficient of the exposure in the outcome model.
+
 ![Alt text](images/coefficient.png)
 
 Posterior inclusion probability of C<sub>1</sub>.
+
 ![Alt text](images/inclusion.png)
 
 
