@@ -1,11 +1,19 @@
-get_stats <- function(x, probs) {
-  x <- as.numeric(x)
-  quants <- quantile(x, probs = probs)
-  names(quants) <- NULL
-  return(c(mean = mean(x), LB = quants[1], UB = quants[2]))
-}
-
-
+#' Plotting LERCA results.
+#' 
+#' Estimated ER, cutoffs, coefficients, inclusion probabilities.
+#' 
+#' @param dta The data that we are using with column X for exposure.
+#' @param lerca The LERCA fit.
+#' @param ER The estimated ER as acquired using GetER().
+#' @param variable Which variable's results to be plotted. Intercept is 1,
+#' Exposure is 2, and the covariates are 3 onwards.
+#' @param wh_model Which model's coefficients and inclusion probabilities to
+#' be plotted. Options are 1, 2 for exposure and outcome model accordingly.
+#' @param probs The quantiles of the distribution to be plotted as intervals.
+#' @param inclusion The inclusion probabilities as a function of the exposure
+#' and as acquired using ExposureInclusion().
+#' @param coefs The coefficients as a function of the exposure as acquired
+#' using ExposureCoefs().
 PlotLERCA <- function(dta, lerca, ER, variable = NULL, wh_model = NULL,
                       probs, inclusion = NULL, coefs = NULL) {
   
