@@ -134,6 +134,10 @@ plots <- PlotLERCA(dta = toyData, lerca = lerca_short, ER = ER, probs = probs,
                    coefs = coefs, inclusion = inclusion, variable = 3,
                    wh_model = 2)
 ```
+Plots produced using this function include the estimated ER, the posterior distribution of the experiment configuration, the observed exposures distribution, the posterior distribution of a variable's coefficient as a function of the exposure, and if that variable is a covariate, the posterior inclusion probability of that variable in the exposure and outcome models.
+
+![Alt text](images/ER.png)
+
 
 ## Functions
 
