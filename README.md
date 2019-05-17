@@ -9,7 +9,7 @@ Installing and using LERCA in Rstudio is straightforward. You will first need th
 ```
 install.packages('devtools')
 library(devtools)
-devtools::install_github("gpapadog/DAPSm")
+devtools::install_github("gpapadog/LERCA")
 ```
 
 ## LERCA example
