@@ -171,6 +171,8 @@ Posterior inclusion probability of C<sub>1</sub>.
 
 - MakeArrays: Function that creates arrays where the LERCA results are saved.
 
+- ModelWeights: Function that calculates the posterior weight of models and orders them in decreasing posterior weight order.
+
 - psr: Function that calculates the PSR based on the mean ER posterior samples.
 
 - SimDifferentialConfounding: Function that generates data with differential confounding.
