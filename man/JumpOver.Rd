@@ -5,9 +5,9 @@
 \title{MCMC jump over move}
 \usage{
 JumpOver(dta, current_cutoffs, current_alphas, current_coefs,
-  approx_likelihood = TRUE, cov_cols, omega = 5000, mu_priorY, Sigma_priorY,
-  comb_probs = c(0.01, 0.5, 0.99), split_probs = c(0.2, 0.95),
-  min_exper_sample = 20, jump_slope_tune = 0.05)
+  approx_likelihood = TRUE, cov_cols, omega = 5000, mu_priorY,
+  Sigma_priorY, comb_probs = c(0.01, 0.5, 0.99), split_probs = c(0.2,
+  0.95), min_exper_sample = 20, jump_slope_tune = 0.05)
 }
 \arguments{
 \item{dta}{Data frame including the covariates as C1, C2, ..., the exposure

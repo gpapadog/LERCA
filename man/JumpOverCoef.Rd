@@ -4,9 +4,9 @@
 \alias{JumpOverCoef}
 \title{Proposing coefficients for the Jump Pver MCMC move.}
 \usage{
-JumpOverCoef(current_coefs, prop_cuts, cuts, curr_exper_same, prop_exper_same,
-  curr_exper_comb, prop_exper_comb, curr_exper_split, prop_exper_split,
-  jump_slope_tune)
+JumpOverCoef(current_coefs, prop_cuts, cuts, curr_exper_same,
+  prop_exper_same, curr_exper_comb, prop_exper_comb, curr_exper_split,
+  prop_exper_split, jump_slope_tune)
 }
 \arguments{
 \item{current_coefs}{The current coefficients of the MCMC. Three dimensional

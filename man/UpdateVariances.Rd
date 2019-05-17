@@ -4,8 +4,8 @@
 \alias{UpdateVariances}
 \title{Exposure and outcome model residual variances}
 \usage{
-UpdateVariances(dta, current_cutoffs, current_coefs, cov_cols, alpha_priorX,
-  beta_priorX, alpha_priorY, beta_priorY)
+UpdateVariances(dta, current_cutoffs, current_coefs, cov_cols,
+  alpha_priorX, beta_priorX, alpha_priorY, beta_priorY)
 }
 \arguments{
 \item{dta}{A data set including a column of the exposure of interest as X,

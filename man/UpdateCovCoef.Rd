@@ -4,8 +4,9 @@
 \alias{UpdateCovCoef}
 \title{Update within experiment coefficients}
 \usage{
-UpdateCovCoef(dta, cov_cols, current_cutoffs, current_coefs, current_alphas,
-  current_vars, mu_priorX, Sigma_priorX, mu_priorY, Sigma_priorY)
+UpdateCovCoef(dta, cov_cols, current_cutoffs, current_coefs,
+  current_alphas, current_vars, mu_priorX, Sigma_priorX, mu_priorY,
+  Sigma_priorY)
 }
 \arguments{
 \item{dta}{A data set including a column of the exposure of interest as X,

@@ -4,8 +4,8 @@
 \alias{MakeArrays}
 \title{Create arrays to save MCMC posterior samples}
 \usage{
-MakeArrays(X = NULL, chains, Nsims, num_exper, num_conf, omega, minX, maxX,
-  starting_cutoffs, starting_alphas, starting_coefs, starting_vars,
+MakeArrays(X = NULL, chains, Nsims, num_exper, num_conf, omega, minX,
+  maxX, starting_cutoffs, starting_alphas, starting_coefs, starting_vars,
   min_exper_sample = 0)
 }
 \arguments{
