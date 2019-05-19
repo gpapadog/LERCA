@@ -91,7 +91,7 @@ PlotLERCA <- function(dta, lerca, ER, variable = NULL, wh_model = NULL,
   if (!is.null(inclusion) & !is.null(variable) & (variable > 2)) {
     
     inclusion_plot <- apply(inclusion[, , , variable - 2], 2 : 3, mean)
-    inclusion_plot <- adply(inclusion_plot, 1 : 2)
+    inclusion_plot <- plyr::adply(inclusion_plot, 1 : 2)
     names(inclusion_plot)[3] <- 'value'
     inclusion_plot$exposure <- as.numeric(as.character(inclusion_plot$exposure))
 
