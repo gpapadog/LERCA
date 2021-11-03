@@ -4,9 +4,21 @@
 \alias{MakeArrays}
 \title{Create arrays to save MCMC posterior samples}
 \usage{
-MakeArrays(X = NULL, chains, Nsims, num_exper, num_conf, omega, minX,
-  maxX, starting_cutoffs, starting_alphas, starting_coefs, starting_vars,
-  min_exper_sample = 0)
+MakeArrays(
+  X = NULL,
+  chains,
+  Nsims,
+  num_exper,
+  num_conf,
+  omega,
+  minX,
+  maxX,
+  starting_cutoffs,
+  starting_alphas,
+  starting_coefs,
+  starting_vars,
+  min_exper_sample = 0
+)
 }
 \arguments{
 \item{X}{Numeric vector. Observed exposure values. Can be left NULL if

@@ -4,9 +4,18 @@
 \alias{UpdateExperiments}
 \title{Separate move of the experiment configuration}
 \usage{
-UpdateExperiments(dta, cov_cols, current_cutoffs, current_coefs,
-  current_vars, min_exper_sample = 20, prop_distribution = c("Uniform",
-  "Normal"), normal_percent = 1, mu_priorY, Sigma_priorY)
+UpdateExperiments(
+  dta,
+  cov_cols,
+  current_cutoffs,
+  current_coefs,
+  current_vars,
+  min_exper_sample = 20,
+  prop_distribution = c("Uniform", "Normal"),
+  normal_percent = 1,
+  mu_priorY,
+  Sigma_priorY
+)
 }
 \arguments{
 \item{dta}{Data frame including the covariates as C1, C2, ..., the exposure

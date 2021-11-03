@@ -4,9 +4,17 @@
 \alias{GetbYvalues}
 \title{Experiments' outcome model intercepts for continuous ER.}
 \usage{
-GetbYvalues(num_exper, Xrange = NULL, exper_change = NULL, bYX,
-  interYexp1 = 0, out_coef, meanC, weights = NULL,
-  XY_function = c("linear", "other"))
+GetbYvalues(
+  num_exper,
+  Xrange = NULL,
+  exper_change = NULL,
+  bYX,
+  interYexp1 = 0,
+  out_coef,
+  meanC,
+  weights = NULL,
+  XY_function = c("linear", "other")
+)
 }
 \arguments{
 \item{num_exper}{The number of experiments. Should be > 1.}

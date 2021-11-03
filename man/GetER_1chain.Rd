@@ -4,8 +4,15 @@
 \alias{GetER_1chain}
 \title{Calculating the exposure response function for one MCMC chain.}
 \usage{
-GetER_1chain(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
-  mean_only = FALSE, other_function = NULL)
+GetER_1chain(
+  dta,
+  cutoffs,
+  coefs,
+  predict_at = NULL,
+  grid_length = 100,
+  mean_only = FALSE,
+  other_function = NULL
+)
 }
 \arguments{
 \item{dta}{The dataset including columns X (treatment), Y (outcome), and potential

@@ -4,8 +4,15 @@
 \alias{GetER}
 \title{CER estimates from LERCA fit.}
 \usage{
-GetER(dta, cutoffs, coefs, predict_at = NULL, grid_length = 100,
-  mean_only = FALSE, other_function = NULL)
+GetER(
+  dta,
+  cutoffs,
+  coefs,
+  predict_at = NULL,
+  grid_length = 100,
+  mean_only = FALSE,
+  other_function = NULL
+)
 }
 \arguments{
 \item{dta}{The dataset including columns X (treatment), Y (outcome), and

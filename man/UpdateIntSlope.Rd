@@ -4,8 +4,15 @@
 \alias{UpdateIntSlope}
 \title{Intercepts and coefficients of exposure}
 \usage{
-UpdateIntSlope(dta, cov_cols, current_cutoffs, current_coefs, current_vars,
-  mu_priorY, Sigma_priorY)
+UpdateIntSlope(
+  dta,
+  cov_cols,
+  current_cutoffs,
+  current_coefs,
+  current_vars,
+  mu_priorY,
+  Sigma_priorY
+)
 }
 \arguments{
 \item{dta}{A data set including a column of the exposure of interest as X,

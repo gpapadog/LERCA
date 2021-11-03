@@ -4,8 +4,19 @@
 \alias{UpdateAlphas}
 \title{Update the inclusion indicators from their full conditional.}
 \usage{
-UpdateAlphas(dta, cov_cols, current_cutoffs, current_alphaY, current_coefs,
-  current_vars, mu_priorX, Sigma_priorX, mu_priorY, Sigma_priorY, omega)
+UpdateAlphas(
+  dta,
+  cov_cols,
+  current_cutoffs,
+  current_alphaY,
+  current_coefs,
+  current_vars,
+  mu_priorX,
+  Sigma_priorX,
+  mu_priorY,
+  Sigma_priorY,
+  omega
+)
 }
 \arguments{
 \item{dta}{A data set including a column of the exposure of interest as X,
