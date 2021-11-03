@@ -29,21 +29,22 @@ PlotLERCA <- function(dta, lerca, ER, variable = NULL, wh_model = NULL,
   # Plotting the ER.
   
   plot_ER <- ggplot() +
-    geom_ribbon(data = ER_results, aes(x = x, ymin = LB, ymax = UB),
+    ggplot2::geom_ribbon(data = ER_results, aes(x = x, ymin = LB, ymax = UB),
                 fill = 'grey80') +
-    geom_line(data = ER_results, aes(x = x, y = mean)) +
-    theme(panel.background = element_blank()) +
-    ylab('Response') + xlab('Exposure')
+    ggplot2::geom_line(data = ER_results, aes(x = x, y = mean)) +
+    ggplot2::theme(panel.background = element_blank()) +
+    ggplot2::ylab('Response') + ggplot2::xlab('Exposure')
   
   
   # Plotting the cutoffs.
   
   cutoffs_results <- data.frame(x = as.numeric(lerca$cutoffs))
-  plot_cutoffs <- ggplot(cutoffs_results, aes(x = x)) + 
-    geom_histogram(aes(y = ..density..), binwidth = 0.06) +
-    geom_density(alpha=.2, adjust = 1 / 2, fill="#FF6666") +
-    xlab('') + ylab('Experiment Configuration') + xlim(range(dta$X)) +
-    theme(panel.background = element_blank(),
+  plot_cutoffs <- ggplot2::ggplot(cutoffs_results, aes(x = x)) + 
+    ggplot2::geom_histogram(aes(y = ..density..), binwidth = 0.06) +
+    ggplot2::geom_density(alpha=.2, adjust = 1 / 2, fill="#FF6666") +
+    ggplot2::xlab('') + ggplot2::ylab('Experiment Configuration') + 
+    ggplot2::xlim(range(dta$X)) +
+    ggplot2::theme(panel.background = element_blank(),
           plot.title = element_text(hjust = 0.5),
           axis.ticks.y = element_blank(),
           axis.text.y = element_blank())
@@ -52,15 +53,15 @@ PlotLERCA <- function(dta, lerca, ER, variable = NULL, wh_model = NULL,
   # Plotting the observed distribution.
   
   observed_exposure <- data.frame(x = dta$X)
-  plot_exposures <- ggplot(observed_exposure, aes(x = x)) + 
-    geom_histogram(aes(y = ..density..), binwidth = 0.1) +
-    geom_density(alpha=.2, adjust = 1, fill="#FF6666") +
-    xlab(expression(PM[2.5])) +
-    ylab(expression(paste('Observed ', PM[2.5]))) +
-    theme(panel.background = element_blank(),
-          plot.title = element_text(hjust = 0.5),
-          axis.ticks.y = element_blank(),
-          axis.text.y = element_blank())
+  plot_exposures <- ggplot2::ggplot(observed_exposure, aes(x = x)) + 
+    ggplot2::geom_histogram(aes(y = ..density..), binwidth = 0.1) +
+    ggplot2::geom_density(alpha=.2, adjust = 1, fill="#FF6666") +
+    ggplot2::xlab(expression(PM[2.5])) +
+    ggplot2::ylab(expression(paste('Observed ', PM[2.5]))) +
+    ggplot2::theme(panel.background = ggplot2::element_blank(),
+          plot.title = ggplot2::element_text(hjust = 0.5),
+          axis.ticks.y = ggplot2::element_blank(),
+          axis.text.y = ggplot2::element_blank())
   
   r <- list(plot_ER = plot_ER, plot_cutoffs = plot_cutoffs,
             plot_exposures = plot_exposures)
@@ -75,13 +76,13 @@ PlotLERCA <- function(dta, lerca, ER, variable = NULL, wh_model = NULL,
     slope_stat <- as.data.frame(t(slope_stat))
     slope_stat$x <- exp_values
     
-    plot_coef <- ggplot() +
-      geom_ribbon(data = slope_stat, aes(x = x, ymin = LB, ymax = UB),
+    plot_coef <- ggplot2::ggplot() +
+      ggplot2::geom_ribbon(data = slope_stat, aes(x = x, ymin = LB, ymax = UB),
                   fill = 'grey80') +
-      geom_line(data = slope_stat, aes(x = x, y = mean)) +
-      theme(panel.background = element_blank()) +
-      geom_hline(yintercept = 0, linetype = 2) +
-      ylab('Coefficient') + xlab('')
+      ggplot2::geom_line(data = slope_stat, aes(x = x, y = mean)) +
+      ggplot2::theme(panel.background = ggplot2::element_blank()) +
+      ggplot2::geom_hline(yintercept = 0, linetype = 2) +
+      ggplot2::ylab('Coefficient') + ggplot2::xlab('')
   
     r <- append(r, list(plot_coef = plot_coef))
   }
@@ -95,9 +96,10 @@ PlotLERCA <- function(dta, lerca, ER, variable = NULL, wh_model = NULL,
     names(inclusion_plot)[3] <- 'value'
     inclusion_plot$exposure <- as.numeric(as.character(inclusion_plot$exposure))
 
-    plot_inclusion <- ggplot(data = inclusion_plot,
+    plot_inclusion <- ggplot2::ggplot(data = inclusion_plot,
                              aes(x = exposure, y = value, linetype = model)) +
-      geom_line() + xlab('Exposure') + ylab('Inclusion probability')
+      ggplot2::geom_line() + 
+      ggplot2::xlab('Exposure') + ggplot2::ylab('Inclusion probability')
     
     r <- append(r, list(plot_inclusion = plot_inclusion))
   }

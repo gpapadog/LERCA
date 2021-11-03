@@ -10,7 +10,8 @@ License: GPL (>= 2)
 LazyData: TRUE
 URL: https://github.com/gpapadog/LERCA
 BugReports: https://github.com/gpapadog/LERCA/issues
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
+Encoding: UTF-8
 Depends:
     data.table
 Suggests: 
@@ -20,4 +21,5 @@ Imports:
     data.table,
     invgamma,
     mvnfast,
-    truncnorm
+    truncnorm,
+    ggplot2

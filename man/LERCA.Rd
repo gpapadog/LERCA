@@ -4,17 +4,36 @@
 \alias{LERCA}
 \title{Local Exposure-Response Confounding Adjustment.}
 \usage{
-LERCA(dta, chains, Nsims, K, cov_cols, omega = 5000, mu_priorX = NULL,
-  Sigma_priorX = NULL, mu_priorY = NULL, Sigma_priorY = NULL,
-  alpha_priorX = 0.001, beta_priorX = 0.001, alpha_priorY = 0.001,
-  beta_priorY = 0.001, starting_cutoffs = NULL,
-  starting_alphas = NULL, starting_coefs = NULL,
-  starting_vars = NULL, approx_likelihood = TRUE,
-  prop_distribution = c("Uniform", "Normal"), normal_percent = 1,
-  plot_every = 0, comb_probs = c(0.01, 0.5, 0.99),
-  split_probs = c(0.2, 0.95), s_upd_probs = c(0.8, 0.1, 0.1),
-  alpha_probs = c(0.01, 0.5, 0.99), min_exper_sample = 20,
-  jump_slope_tune = 0.05)
+LERCA(
+  dta,
+  chains,
+  Nsims,
+  K,
+  cov_cols,
+  omega = 5000,
+  mu_priorX = NULL,
+  Sigma_priorX = NULL,
+  mu_priorY = NULL,
+  Sigma_priorY = NULL,
+  alpha_priorX = 0.001,
+  beta_priorX = 0.001,
+  alpha_priorY = 0.001,
+  beta_priorY = 0.001,
+  starting_cutoffs = NULL,
+  starting_alphas = NULL,
+  starting_coefs = NULL,
+  starting_vars = NULL,
+  approx_likelihood = TRUE,
+  prop_distribution = c("Uniform", "Normal"),
+  normal_percent = 1,
+  plot_every = 0,
+  comb_probs = c(0.01, 0.5, 0.99),
+  split_probs = c(0.2, 0.95),
+  s_upd_probs = c(0.8, 0.1, 0.1),
+  alpha_probs = c(0.01, 0.5, 0.99),
+  min_exper_sample = 20,
+  jump_slope_tune = 0.05
+)
 }
 \arguments{
 \item{dta}{A data set including a column of the exposure of interest as X,

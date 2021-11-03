@@ -4,9 +4,19 @@
 \alias{JumpWithin}
 \title{Simultaneous move of experiment, alphas and slopes within experiment.}
 \usage{
-JumpWithin(dta, current_cutoffs, current_alphas, current_coefs, cov_cols,
-  approx_likelihood = TRUE, omega = 5000, mu_priorY, Sigma_priorY,
-  alpha_probs = c(0.01, 0.5, 0.99), min_exper_sample = 20)
+JumpWithin(
+  dta,
+  current_cutoffs,
+  current_alphas,
+  current_coefs,
+  cov_cols,
+  approx_likelihood = TRUE,
+  omega = 5000,
+  mu_priorY,
+  Sigma_priorY,
+  alpha_probs = c(0.01, 0.5, 0.99),
+  min_exper_sample = 20
+)
 }
 \arguments{
 \item{dta}{Data frame including the covariates as C1, C2, ..., the exposure

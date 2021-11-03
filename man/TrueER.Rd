@@ -4,9 +4,15 @@
 \alias{TrueER}
 \title{Calculating the true ER of simulated data set.}
 \usage{
-TrueER(dta, true_cutoffs, out_coefs, predict_at = NULL,
-  grid_length = 100, XY_function = c("linear", "other"),
-  XY_spec = NULL)
+TrueER(
+  dta,
+  true_cutoffs,
+  out_coefs,
+  predict_at = NULL,
+  grid_length = 100,
+  XY_function = c("linear", "other"),
+  XY_spec = NULL
+)
 }
 \arguments{
 \item{dta}{Data frame. Includes exposure as 'X', outcome as 'Y' and

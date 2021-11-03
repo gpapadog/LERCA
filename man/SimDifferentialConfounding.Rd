@@ -4,11 +4,23 @@
 \alias{SimDifferentialConfounding}
 \title{Simulating data with differential confounding.}
 \usage{
-SimDifferentialConfounding(N, num_exper, XCcorr, varC, Xrange,
-  exper_change = NULL, meanCexp1 = NULL, out_coef, interYexp1 = 0,
-  bYX, Ysd = 1, overall_meanC = c("true", "observed"),
-  XY_function = c("linear", "other"), XY_spec = NULL,
-  center_covs = TRUE)
+SimDifferentialConfounding(
+  N,
+  num_exper,
+  XCcorr,
+  varC,
+  Xrange,
+  exper_change = NULL,
+  meanCexp1 = NULL,
+  out_coef,
+  interYexp1 = 0,
+  bYX,
+  Ysd = 1,
+  overall_meanC = c("true", "observed"),
+  XY_function = c("linear", "other"),
+  XY_spec = NULL,
+  center_covs = TRUE
+)
 }
 \arguments{
 \item{N}{Sample size.}

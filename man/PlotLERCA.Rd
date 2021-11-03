@@ -4,8 +4,16 @@
 \alias{PlotLERCA}
 \title{Plotting LERCA results.}
 \usage{
-PlotLERCA(dta, lerca, ER, variable = NULL, wh_model = NULL, probs,
-  inclusion = NULL, coefs = NULL)
+PlotLERCA(
+  dta,
+  lerca,
+  ER,
+  variable = NULL,
+  wh_model = NULL,
+  probs,
+  inclusion = NULL,
+  coefs = NULL
+)
 }
 \arguments{
 \item{dta}{The data that we are using with column X for exposure.}
