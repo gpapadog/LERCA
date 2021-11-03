@@ -1,7 +1,7 @@
 Package: LERCA
 Type: Package
 Title: Local Exposure-Response Confounding Adjustment
-Version: 0.0.0.9000
+Version: 0.0.1.0
 Date: 2017-11-15
 Author: Georgia Papadogeorgou
 Maintainer: Georgia Papadogeorgou <gpapadogeorgou@gmail.com>

@@ -38,7 +38,7 @@ PlotLERCA <- function(dta, lerca, ER, variable = NULL, wh_model = NULL,
   
   # Plotting the cutoffs.
   
-  cutoffs_results <- data.frame(x = as.numeric(lerca_short$cutoffs))
+  cutoffs_results <- data.frame(x = as.numeric(lerca$cutoffs))
   plot_cutoffs <- ggplot(cutoffs_results, aes(x = x)) + 
     geom_histogram(aes(y = ..density..), binwidth = 0.06) +
     geom_density(alpha=.2, adjust = 1 / 2, fill="#FF6666") +
